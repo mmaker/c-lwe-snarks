@@ -8,8 +8,6 @@
 
 #include <gmp.h>
 
-#include "timeit.h"
-
 typedef struct gamma {
   mpz_t p;
   mpz_t q;
@@ -75,6 +73,14 @@ sk_t key_gen(gamma_t gamma)
   return sk;
 }
 
+void key_del(sk_t *sk, gamma_t gamma)
+{
+  for (size_t i = 0; i < gamma.n; i++) {
+    mpz_clear((*sk)[i]);
+  }
+  free(sk);
+}
+
 void ctx_init(ctx_t *ct, gamma_t gamma)
 {
   ct->a = malloc(sizeof(mpz_t) * gamma.n);
@@ -82,6 +88,15 @@ void ctx_init(ctx_t *ct, gamma_t gamma)
     mpz_init(ct->a[i]);
   }
   mpz_init(ct->b);
+}
+
+void ct_clear(ctx_t *ct, gamma_t gamma)
+{
+  mpz_clear(ct->b);
+  for (size_t i = 0; i != gamma.n; i++) {
+    mpz_clear(ct->a[i]);
+  }
+  free(ct->a);
 }
 
 void chi(mpz_t e, gamma_t gamma)
@@ -138,6 +153,13 @@ void eval(ctx_t *rop, gamma_t gamma, ctx_t *c, mpz_t *coeff, size_t d)
   mpz_mod(rop->b, rop->b, gamma.q);
 }
 
+void clear_lin_comb(mpz_t rop, mpz_t *m, mpz_t *coeffs, gamma_t gamma, size_t N)
+{
+  for (size_t i = 0; i != N; ++i) {
+    mpz_addmul(rop, m[i], coeffs[i]);
+  }
+  mpz_mod(rop, rop, gamma.p);
+}
 
 void test_correctness()
 {
@@ -159,7 +181,7 @@ void test_correctness()
     assert(!mpz_cmp(m, _m));
   }
 
-  // sk_del
+  key_del(&sk, gamma);
   mpz_clears(m, _m, NULL);
   param_del(&gamma);
 
@@ -170,44 +192,51 @@ void test_eval()
   gamma_t gamma = param_gen();
   sk_t sk = key_gen(gamma);
 
-  mpz_t m[2];
-  mpz_inits(m[0], m[1], NULL);
-  mpz_urandomm(m[0], gamma.rstate, gamma.p);
-  mpz_urandomm(m[1], gamma.rstate, gamma.p);
+  const int d = 1000;
 
-  mpz_t coeffs[2];
-  mpz_inits(coeffs[0], coeffs[1], NULL);
-  mpz_set_ui(coeffs[0], 0);
-  mpz_set_ui(coeffs[1], 42);
+  for (size_t tries = 0; tries != 1000; ++tries) {
+    printf("%lu\n", tries);
 
-  ctx_t ct[2];
-  ctx_init(&ct[0], gamma);
-  ctx_init(&ct[1], gamma);
-  encrypt(&ct[0], gamma, sk, m[0]);
-  encrypt(&ct[1], gamma, sk, m[1]);
+    mpz_t m[d], coeffs[d];
+    ctx_t ct[d];
+    for(size_t i = 0; i != d; ++i) {
+      mpz_init(m[i]);
+      mpz_init(coeffs[i]);
+      ctx_init(&ct[i], gamma);
+      mpz_urandomm(m[i], gamma.rstate, gamma.p);
+      mpz_urandomm(coeffs[i], gamma.rstate, gamma.p);
+      encrypt(&ct[i], gamma, sk, m[i]);
+    }
+    
+    ctx_t evaluated;
+    ctx_init(&evaluated, gamma);
+    eval(&evaluated, gamma, ct, coeffs, d);
 
-  ctx_t evaluated;
-  ctx_init(&evaluated, gamma);
-  eval(&evaluated, gamma, ct, coeffs, 2);
+    mpz_t got;
+    mpz_init(got);
+    decrypt(got, gamma, sk, evaluated);
 
+    mpz_t correct;
+    mpz_init(correct);
+    clear_lin_comb(correct, m, coeffs, gamma, d);
 
-  mpz_t got;
-  mpz_init(got);
-  decrypt(got, gamma, sk, evaluated);
-  mpz_mul(m[1], m[1], coeffs[1]);
-  mpz_mod(m[1], m[1], gamma.p);
+    assert(!mpz_cmp(got, correct));
 
-  assert(!mpz_cmp(m[1], got));
+    for (size_t i = 0; i != d; ++i) {
+      mpz_clear(m[i]);
+      mpz_clear(coeffs[i]);
+      ct_clear(&ct[i], gamma);
+    }
+  }
 
-  // sk_del
-  mpz_clears(m[0], m[1], NULL);
+  key_del(&sk, gamma);  
   param_del(&gamma);
 }
 
 
 int main()
 {
-  //test_correctness();
+  // test_correctness();
   test_eval();
   return EXIT_SUCCESS;
 }
