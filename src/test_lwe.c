@@ -86,8 +86,26 @@ void test_eval()
 }
 
 
+void test_errdist_uniform()
+{
+  mpz_t e;
+  mpz_init(e);
+  gamma_t gamma = param_gen();
+
+  int signs = 0;
+  for (size_t i = 0; i < 1e6; i++) {
+    errdist_uniform(e, gamma);
+    signs += mpz_sgn(e);
+  }
+  printf("%d\n", signs);
+  assert(abs(signs) < 1e3);
+  mpz_clear(e);
+  param_clear(&gamma);
+}
+
 int main()
 {
+  test_errdist_uniform();
   test_correctness();
   test_eval();
   return EXIT_SUCCESS;
