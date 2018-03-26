@@ -11,10 +11,10 @@
 #include "lwe.h"
 
 
-void dot_product(mpz_t rop, mpz_t *a, mpz_t *b, size_t len)
+void dot_product(mpz_t rop, mpz_t modulus, mpz_t a[], mpz_t b[], size_t len)
 {
   mpz_set_ui(rop, 0);
-  for (size_t i = 0; i != len; i++) {
+  for (size_t i = 0; i < len; i++) {
     mpz_addmul(rop, a[i], b[i]);
   }
 }
@@ -32,6 +32,7 @@ gamma_t param_gen()
 
   gamma.log_sigma = 650;
   gamma.n = GAMMA_N;
+  gamma.d = GAMMA_D;
 
   uint64_t rseed;
   gmp_randinit_default(gamma.rstate);
@@ -42,7 +43,7 @@ gamma_t param_gen()
 }
 
 
-void param_del(gamma_t *g)
+void param_clear(gamma_t *g)
 {
   mpz_clear(g->q);
   mpz_clear(g->p);
@@ -59,12 +60,10 @@ void key_gen(sk_t sk, gamma_t gamma)
 
 void key_clear(sk_t sk, gamma_t gamma)
 {
-  for (size_t i = 0; i < gamma.n; i++) {
-    mpz_clear(sk[i]);
-  }
+  mpz_clearv(sk, gamma.n);
 }
 
-void ctx_init(ctx_t *ct, gamma_t gamma)
+void ct_init(ctx_t ct, gamma_t gamma)
 {
   ct->a = malloc(sizeof(mpz_t) * gamma.n);
   for (size_t i = 0; i != gamma.n; i++) {
@@ -73,12 +72,10 @@ void ctx_init(ctx_t *ct, gamma_t gamma)
   mpz_init(ct->b);
 }
 
-void ct_clear(ctx_t *ct, gamma_t gamma)
+void ct_clear(ctx_t ct, gamma_t gamma)
 {
   mpz_clear(ct->b);
-  for (size_t i = 0; i != gamma.n; i++) {
-    mpz_clear(ct->a[i]);
-  }
+  mpz_clearv(ct->a, gamma.n);
   free(ct->a);
 }
 
@@ -88,7 +85,7 @@ void chi(mpz_t e, gamma_t gamma)
   if (e->_mp_d[0] & 1) mpz_mul_ui(e, e, -1);
 }
 
-void encrypt(ctx_t *c, gamma_t gamma, sk_t sk, mpz_t m)
+void encrypt(ctx_t c, gamma_t gamma, sk_t sk, mpz_t m)
 {
   assert(mpz_cmp(gamma.p, m) > 0);
 
@@ -104,7 +101,7 @@ void encrypt(ctx_t *c, gamma_t gamma, sk_t sk, mpz_t m)
     mpz_urandomm(c->a[i], gamma.rstate, gamma.q);
   }
 
-  dot_product(c->b, sk, c->a, gamma.n);
+  dot_product(c->b, gamma.q, sk, c->a, gamma.n);
   mpz_add(c->b, c->b, m);
   mpz_mod(c->b, c->b, gamma.q);
 
@@ -113,26 +110,25 @@ void encrypt(ctx_t *c, gamma_t gamma, sk_t sk, mpz_t m)
 
 void decrypt(mpz_t m, gamma_t gamma, sk_t sk, ctx_t ct)
 {
-  dot_product(m, ct.a, sk, gamma.n);
-  mpz_sub(m, ct.b, m);
+  dot_product(m, gamma.q, ct->a, sk, gamma.n);
+  mpz_sub(m, ct->b, m);
   mpz_mod(m, m, gamma.q);
   mpz_mod(m, m, gamma.p);
 }
 
-void eval(ctx_t *rop, gamma_t gamma, ctx_t *c, mpz_t *coeff, size_t d)
+void eval(ctx_t rop, gamma_t gamma, ctx_t c[], mpz_t *coeff, size_t d)
 {
-
   for (size_t i = 0; i != gamma.n; i++) {
     mpz_set_ui(rop->a[i], 0);
     for (size_t j = 0; j != d; j++) {
-      mpz_addmul(rop->a[i], c[j].a[i], coeff[j]);
+      mpz_addmul(rop->a[i], c[j]->a[i], coeff[j]);
     }
     mpz_mod(rop->a[i], rop->a[i], gamma.q);
   }
 
   mpz_set_ui(rop->b, 0);
   for (size_t j = 0; j != d; j++) {
-    mpz_addmul(rop->b, c[j].b, coeff[j]);
+    mpz_addmul(rop->b, c[j]->b, coeff[j]);
   }
   mpz_mod(rop->b, rop->b, gamma.q);
 }

@@ -102,3 +102,4 @@ src/stamp-h1
 *.trs
 src/.deps/
 config.h.in
+perf

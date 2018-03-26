@@ -11,7 +11,6 @@
 #include "lwe.h"
 
 
-
 void test_correctness()
 {
   gamma_t gamma = param_gen();
@@ -24,18 +23,18 @@ void test_correctness()
   mpz_init(_m);
 
   ctx_t c;
-  ctx_init(&c, gamma);
+  ct_init(c, gamma);
 
   for (size_t i = 0; i < 100; i++) {
     mpz_urandomm(m, gamma.rstate, gamma.p);
-    encrypt(&c, gamma, sk, m);
+    encrypt(c, gamma, sk, m);
     decrypt(_m, gamma, sk, c);
     assert(!mpz_cmp(m, _m));
   }
 
   key_clear(sk, gamma);
   mpz_clears(m, _m, NULL);
-  param_del(&gamma);
+  param_clear(&gamma);
 
 }
 
@@ -55,15 +54,15 @@ void test_eval()
     for(size_t i = 0; i != d; ++i) {
       mpz_init(m[i]);
       mpz_init(coeffs[i]);
-      ctx_init(&ct[i], gamma);
+      ct_init(ct[i], gamma);
       mpz_urandomm(m[i], gamma.rstate, gamma.p);
       mpz_urandomm(coeffs[i], gamma.rstate, gamma.p);
-      encrypt(&ct[i], gamma, sk, m[i]);
+      encrypt(ct[i], gamma, sk, m[i]);
     }
 
     ctx_t evaluated;
-    ctx_init(&evaluated, gamma);
-    eval(&evaluated, gamma, ct, coeffs, d);
+    ct_init(evaluated, gamma);
+    eval(evaluated, gamma, ct, coeffs, d);
 
     mpz_t got;
     mpz_init(got);
@@ -78,12 +77,12 @@ void test_eval()
     for (size_t i = 0; i != d; ++i) {
       mpz_clear(m[i]);
       mpz_clear(coeffs[i]);
-      ct_clear(&ct[i], gamma);
+      ct_clear(ct[i], gamma);
     }
   }
 
   key_clear(sk, gamma);
-  param_del(&gamma);
+  param_clear(&gamma);
 }
 
 

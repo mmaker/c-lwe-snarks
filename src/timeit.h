@@ -1,3 +1,4 @@
+#pragma once
 #include <sys/time.h>
 
 #define INIT_TIMEIT()                           \
@@ -9,8 +10,8 @@
 
 #define END_TIMEIT()                                                    \
   gettimeofday(&__end, NULL);                                           \
-  __sdiff += (__end.tv_sec - __start.tv_sec);                           \
-  __udiff += (__end.tv_usec - __start.tv_usec)
+  __sdiff = (__end.tv_sec - __start.tv_sec);                           \
+  __udiff = (__end.tv_usec - __start.tv_usec)
 
 #define GET_TIMEIT()                            \
   __sdiff + __udiff * 1e-6

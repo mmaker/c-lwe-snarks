@@ -44,15 +44,15 @@ AM_INIT_AUTOMAKE
 CFLAGS+=" -pedantic -Wall "
 
 # Shut up automake
-AM_SILENT_RULES([yes])
-AC_SUBST([AM_MAKEFLAGS], [--no-print-directory])
+#AM_SILENT_RULES([yes])
+#AC_SUBST([AM_MAKEFLAGS], [--no-print-directory])
 
 # Adding package options
 
 AC_ARG_ENABLE(debug,
    AS_HELP_STRING([--enable-debug], [enable debugging, default: no]),
-   CFLAGS+=" -UNDEBUG -O0 -ggdb -fbounds-check -D_FORTIFY_SOURCE=1",
-   CFLAGS+=" -DNDEBUG -O3 -march=native")
+   CFLAGS+=" -UNDEBUG -O0 -ggdb -fbounds-check -D_FORTIFY_SOURCE=1 -fopenmp",
+   CFLAGS+=" -DNDEBUG -O3 -march=native -fopenmp")
 
 
 #AC_ARG_VAR([ss_base], [ss base])
