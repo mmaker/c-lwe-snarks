@@ -79,20 +79,20 @@ void ct_clear(ctx_t ct, gamma_t gamma)
   free(ct->a);
 }
 
-void chi(mpz_t e, gamma_t gamma)
+void errdist_uniform(mpz_t e, gamma_t gamma)
 {
   mpz_urandomb(e, gamma.rstate, gamma.log_sigma + 3);
   if (e->_mp_d[0] & 1) mpz_mul_ui(e, e, -1);
 }
 
-void encrypt(ctx_t c, gamma_t gamma, sk_t sk, mpz_t m)
+void encrypt1(ctx_t c, gamma_t gamma, sk_t sk, mpz_t m, void (*chi)(mpz_t, gamma_t))
 {
   assert(mpz_cmp(gamma.p, m) > 0);
 
   // sample the error
   mpz_t e;
   mpz_init(e);
-  chi(e, gamma);
+  (*chi)(e, gamma);
 
   mpz_mul(c->b, e, gamma.p);
 
