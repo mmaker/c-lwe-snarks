@@ -25,7 +25,7 @@ void benchmark_encrypt()
   ct_init(c, gamma);
 
   INIT_TIMEIT();
-  for (size_t i = 0; i < 100; i++) {
+  for (size_t i = 0; i < 1e4; i++) {
     mpz_urandomm(m, gamma.rstate, gamma.p);
     START_TIMEIT();
     encrypt(c, gamma, sk, m);
