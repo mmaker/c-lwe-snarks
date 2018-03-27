@@ -18,20 +18,20 @@ void test_correctness()
   key_gen(sk, gamma);
 
   mpz_t m, _m;
-
   mpz_init(m);
   mpz_init(_m);
 
   ctx_t c;
   ct_init(c, gamma);
 
-  for (size_t i = 0; i < 100; i++) {
+  for (size_t i = 0; i < 10; i++) {
     mpz_urandomm(m, gamma.rstate, gamma.p);
     encrypt(c, gamma, sk, m);
     decrypt(_m, gamma, sk, c);
     assert(!mpz_cmp(m, _m));
   }
 
+  ct_clear(c, gamma);
   key_clear(sk, gamma);
   mpz_clears(m, _m, NULL);
   param_clear(&gamma);
@@ -47,7 +47,7 @@ void test_eval()
   sk_t sk;
   key_gen(sk, gamma);
 
-  const size_t d = 1000;
+  const size_t d = 100;
 
   for (size_t tries = 0; tries != 10; tries++) {
     mpz_t m[d], coeffs[d];
@@ -102,6 +102,7 @@ void test_errdist_uniform()
   mpz_clear(e);
   param_clear(&gamma);
 }
+
 
 int main()
 {

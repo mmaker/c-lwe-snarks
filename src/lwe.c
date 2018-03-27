@@ -48,6 +48,7 @@ void param_clear(gamma_t *g)
 {
   mpz_clear(g->q);
   mpz_clear(g->p);
+  gmp_randclear(g->rstate);
 }
 
 
