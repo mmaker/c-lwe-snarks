@@ -17,6 +17,7 @@ void dot_product(mpz_t rop, mpz_t modulus, mpz_t a[], mpz_t b[], size_t len)
   for (size_t i = 0; i < len; i++) {
     mpz_addmul(rop, a[i], b[i]);
   }
+  mpz_mod(rop, rop, modulus);
 }
 
 gamma_t param_gen()
@@ -119,7 +120,7 @@ void decrypt(mpz_t m, gamma_t gamma, sk_t sk, ctx_t ct)
   mpz_mod(m, m, gamma.p);
 }
 
-void eval(ctx_t rop, gamma_t gamma, ctx_t c[], mpz_t *coeff, size_t d)
+void eval(ctx_t rop, gamma_t gamma, ctx_t c[], mpz_t coeff[], size_t d)
 {
   for (size_t i = 0; i != gamma.n; i++) {
     mpz_set_ui(rop->a[i], 0);
@@ -134,12 +135,4 @@ void eval(ctx_t rop, gamma_t gamma, ctx_t c[], mpz_t *coeff, size_t d)
     mpz_addmul(rop->b, c[j]->b, coeff[j]);
   }
   mpz_mod(rop->b, rop->b, gamma.q);
-}
-
-void clear_lin_comb(mpz_t rop, mpz_t *m, mpz_t *coeffs, gamma_t gamma, size_t N)
-{
-  for (size_t i = 0; i != N; ++i) {
-    mpz_addmul(rop, m[i], coeffs[i]);
-  }
-  mpz_mod(rop, rop, gamma.p);
 }

@@ -44,8 +44,8 @@ AM_INIT_AUTOMAKE
 CFLAGS+=" -pedantic -Wall "
 
 # Shut up automake
-#AM_SILENT_RULES([yes])
-#AC_SUBST([AM_MAKEFLAGS], [--no-print-directory])
+AM_SILENT_RULES([yes])
+AC_SUBST([AM_MAKEFLAGS], [--no-print-directory])
 
 # Adding package options
 

@@ -38,6 +38,9 @@ void test_correctness()
 
 }
 
+
+void dot_product(mpz_t rop, mpz_t modulus, mpz_t a[], mpz_t b[], size_t len);
+
 void test_eval()
 {
   gamma_t gamma = param_gen();
@@ -46,12 +49,11 @@ void test_eval()
 
   const size_t d = 1000;
 
-  for (size_t tries = 0; tries != 10; ++tries) {
-    printf("%lu\n", tries);
-
+  for (size_t tries = 0; tries != 10; tries++) {
     mpz_t m[d], coeffs[d];
     ctx_t ct[d];
-    for(size_t i = 0; i != d; ++i) {
+
+    for(size_t i = 0; i != d; i++) {
       mpz_init(m[i]);
       mpz_init(coeffs[i]);
       ct_init(ct[i], gamma);
@@ -70,15 +72,14 @@ void test_eval()
 
     mpz_t correct;
     mpz_init(correct);
-    clear_lin_comb(correct, m, coeffs, gamma, d);
-
+    dot_product(correct, gamma.p, m, coeffs, d);
     assert(!mpz_cmp(got, correct));
 
-    for (size_t i = 0; i != d; ++i) {
-      mpz_clear(m[i]);
-      mpz_clear(coeffs[i]);
-      ct_clear(ct[i], gamma);
-    }
+    mpz_clears(got, correct, NULL);
+    mpz_clearv(m, d);
+    mpz_clearv(coeffs, d);
+    ct_clear(evaluated, gamma);
+    ct_clearv(ct, d, gamma);
   }
 
   key_clear(sk, gamma);
@@ -97,8 +98,7 @@ void test_errdist_uniform()
     errdist_uniform(e, gamma);
     signs += mpz_sgn(e);
   }
-  printf("%d\n", signs);
-  assert(abs(signs) < 1e3);
+  assert(abs(signs) < 1e4);
   mpz_clear(e);
   param_clear(&gamma);
 }
