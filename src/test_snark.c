@@ -29,7 +29,10 @@ void test_crs()
     assert(!mpz_cmp(got, alpha_s_i));
   }
 
+  mpz_clears(s_i, alpha_s_i, got, NULL);
   crs_clear(crs, gamma);
+  vk_clear(vk, gamma);
+  param_clear(&gamma);
 }
 
 

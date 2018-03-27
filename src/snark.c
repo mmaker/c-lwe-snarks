@@ -36,6 +36,13 @@ void crs_gen(crs_t crs, vk_t vk, gamma_t gamma) {
   mpz_clears(alpha, s, s_i, alpha_s_i, NULL);
 }
 
+
+void vk_clear(vk_t vk, gamma_t gamma)
+{
+  mpz_clear(vk->s);
+  mpz_clear(vk->alpha);
+  key_clear(vk->sk, gamma);
+}
 void crs_clear(crs_t crs, gamma_t gamma)
 {
   ct_clearv(crs->s, gamma.d, gamma);

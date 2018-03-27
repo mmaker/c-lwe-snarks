@@ -14,7 +14,7 @@ typedef struct gamma {
 } gamma_t;
 
 #define GAMMA_N 1200
-#define GAMMA_D (1<<15)
+#define GAMMA_D (1<<6)
 
 gamma_t param_gen();
 void param_clear(gamma_t *g);
