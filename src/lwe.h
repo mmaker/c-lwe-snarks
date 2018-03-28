@@ -17,7 +17,7 @@ typedef struct gamma {
 } gamma_t;
 
 #define GAMMA_N 1200
-#define GAMMA_D (1<<8)
+#define GAMMA_D (1<<4)
 
 gamma_t param_gen();
 gamma_t param_gen_from_seed(rseed_t rseed);
@@ -70,5 +70,11 @@ void clear_lin_comb(mpz_t rop, mpz_t *m, mpz_t *coeffs, gamma_t gamma, size_t N)
 #define mpz_clearv(vs, len) do {                    \
   for (size_t i = 0; i < len; i++) {                \
     mpz_clear((vs)[i]);                             \
+  }                                                 \
+} while (0)
+
+#define mpz_initv(vs, len) do {                    \
+  for (size_t i = 0; i < len; i++) {                \
+    mpz_init((vs)[i]);                             \
   }                                                 \
 } while (0)

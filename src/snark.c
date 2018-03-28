@@ -29,7 +29,6 @@ void crs_gen(crs_t crs, vk_t vk, gamma_t gamma) {
   mpz_t mpz_rseed;
   mpz_init(mpz_rseed);
   mpz_import(mpz_rseed, 32, 1, sizeof(rseed[0]), 0, 0, rseed);
-  gmp_printf("%Zd\n", mpz_rseed);
   gmp_randseed(rs, mpz_rseed);
   mpz_clear(mpz_rseed);
 
