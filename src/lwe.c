@@ -2,9 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 
 #include <sys/random.h>
-#include <sys/syscall.h>
 
 #include <gmp.h>
 
@@ -20,9 +20,8 @@ void dot_product(mpz_t rop, mpz_t modulus, mpz_t a[], mpz_t b[], size_t len)
   mpz_mod(rop, rop, modulus);
 }
 
-gamma_t param_gen()
+gamma_t param_gen_from_seed(rseed_t rseed)
 {
-
   gamma_t gamma;
   mpz_init(gamma.p);
   mpz_set_ui(gamma.p, 469572863);
@@ -35,14 +34,24 @@ gamma_t param_gen()
   gamma.n = GAMMA_N;
   gamma.d = GAMMA_D;
 
-  uint64_t rseed;
   gmp_randinit_default(gamma.rstate);
-  getrandom(&rseed, sizeof(uint64_t), GRND_NONBLOCK);
-  gmp_randseed_ui(gamma.rstate, rseed);
 
+  mpz_t mpz_rseed;
+  mpz_init(mpz_rseed);
+  mpz_import(mpz_rseed, 32, 1, sizeof(rseed[0]), 0, 0, rseed);
+  gmp_randseed(gamma.rstate, mpz_rseed);
+  mpz_clear(mpz_rseed);
+
+  memmove(gamma.rseed, rseed, sizeof(rseed_t));
   return gamma;
 }
 
+gamma_t param_gen()
+{
+  rseed_t rseed;
+  getrandom(&rseed, sizeof(rseed_t), GRND_NONBLOCK);
+  return param_gen_from_seed(rseed);
+}
 
 void param_clear(gamma_t *g)
 {
@@ -90,7 +99,7 @@ void errdist_uniform(mpz_t e, gamma_t gamma)
   mpz_clrbit(e, bit_pos);
 }
 
-void encrypt1(ctx_t c, gamma_t gamma, sk_t sk, mpz_t m, void (*chi)(mpz_t, gamma_t))
+void encrypt1(ctx_t c, gamma_t gamma, gmp_randstate_t rs, sk_t sk, mpz_t m, void (*chi)(mpz_t, gamma_t))
 {
   assert(mpz_cmp(gamma.p, m) > 0);
 
@@ -103,7 +112,7 @@ void encrypt1(ctx_t c, gamma_t gamma, sk_t sk, mpz_t m, void (*chi)(mpz_t, gamma
 
   // sample a
   for (size_t i=0; i < gamma.n; i++) {
-    mpz_urandomm(c->a[i], gamma.rstate, gamma.q);
+    mpz_urandomm(c->a[i], rs, gamma.q);
   }
 
   dot_product(c->b, gamma.q, sk, c->a, gamma.n);
@@ -111,6 +120,15 @@ void encrypt1(ctx_t c, gamma_t gamma, sk_t sk, mpz_t m, void (*chi)(mpz_t, gamma
   mpz_mod(c->b, c->b, gamma.q);
 
   mpz_clear(e);
+}
+
+void decompress_encryption(ctx_t c, gamma_t gamma, gmp_randstate_t rs, mpz_t b)
+{
+  for (size_t i=0; i < gamma.n; i++) {
+    mpz_urandomm(c->a[i], rs, gamma.q);
+  }
+
+  mpz_set(c->b, b);
 }
 
 void decrypt(mpz_t m, gamma_t gamma, sk_t sk, ctx_t ct)

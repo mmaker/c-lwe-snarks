@@ -4,19 +4,23 @@
 
 /* Parameter generation */
 
+typedef uint8_t rseed_t[32];
+
 typedef struct gamma {
   mpz_t p;
   mpz_t q;
   uint64_t log_sigma;
   uint64_t n;
   gmp_randstate_t rstate;
+  rseed_t rseed;
   uint64_t d;
 } gamma_t;
 
 #define GAMMA_N 1200
-#define GAMMA_D (1<<6)
+#define GAMMA_D (1<<8)
 
 gamma_t param_gen();
+gamma_t param_gen_from_seed(rseed_t rseed);
 void param_clear(gamma_t *g);
 
 /* secret key generation */
@@ -40,12 +44,13 @@ typedef struct __ctx ctx_t[1];
 void ct_init(ctx_t ct, gamma_t gamma);
 void ct_clear(ctx_t ct, gamma_t gamma);
 
-void encrypt1(ctx_t c, gamma_t gamma, sk_t sk, mpz_t m, void (*chi)(mpz_t, gamma_t));
+void decompress_encryption(ctx_t c, gamma_t gamma, gmp_randstate_t rs, mpz_t b);
+void encrypt1(ctx_t c, gamma_t gamma, gmp_randstate_t rs, sk_t sk, mpz_t m, void (*chi)(mpz_t, gamma_t));
 
 static inline
-void encrypt(ctx_t c, gamma_t gamma, sk_t sk, mpz_t m)
+void encrypt(ctx_t c, gamma_t gamma, gmp_randstate_t rs, sk_t sk, mpz_t m)
 {
-  encrypt1(c, gamma, sk, m, errdist_uniform);
+  encrypt1(c, gamma, rs, sk, m, errdist_uniform);
 }
 
 

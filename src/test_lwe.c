@@ -26,7 +26,7 @@ void test_correctness()
 
   for (size_t i = 0; i < 10; i++) {
     mpz_urandomm(m, gamma.rstate, gamma.p);
-    encrypt(c, gamma, sk, m);
+    encrypt(c, gamma, gamma.rstate, sk, m);
     decrypt(_m, gamma, sk, c);
     assert(!mpz_cmp(m, _m));
   }
@@ -59,7 +59,7 @@ void test_eval()
       ct_init(ct[i], gamma);
       mpz_urandomm(m[i], gamma.rstate, gamma.p);
       mpz_urandomm(coeffs[i], gamma.rstate, gamma.p);
-      encrypt(ct[i], gamma, sk, m[i]);
+      encrypt(ct[i], gamma, gamma.rstate, sk, m[i]);
     }
 
     ctx_t evaluated;

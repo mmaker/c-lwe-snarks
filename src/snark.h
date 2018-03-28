@@ -2,10 +2,11 @@
 #include "lwe.h"
 
 struct __crs {
-  ctx_t s[GAMMA_D];
-  ctx_t alpha_s[GAMMA_D+1];
-  ctx_t beta_t;
-  ctx_t beta_v[GAMMA_D];
+  rseed_t rseed;
+  mpz_t s[GAMMA_D];
+  mpz_t alpha_s[GAMMA_D+1];
+  mpz_t beta_t;
+  mpz_t beta_v[GAMMA_D];
 };
 
 

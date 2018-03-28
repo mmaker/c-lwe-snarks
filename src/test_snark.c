@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "snark.h"
 
@@ -16,16 +17,25 @@ void test_crs()
   mpz_init(alpha_s_i);
   mpz_init(got);
 
+  gamma_t gamma_ = param_gen_from_seed(crs->rseed);
+  ctx_t ct;
+  ct_init(ct, gamma_);
 
-  decrypt(got, gamma, vk->sk, crs->alpha_s[0]);
+  assert(!memcmp(crs->rseed, gamma_.rseed, sizeof(rseed_t)));
+
+  decompress_encryption(ct, gamma_, gamma_.rstate, crs->alpha_s[0]);
+  decrypt(got, gamma_, vk->sk, ct);
   assert(!mpz_cmp(got, vk->alpha));
+
   for (size_t i = 0; i < gamma.d; i++) {
     mpz_mul_mod(s_i, s_i, vk->s, gamma.p);
-    decrypt(got, gamma, vk->sk, crs->s[i]);
+    decompress_encryption(ct, gamma_, gamma_.rstate, crs->s[i]);
+    decrypt(got, gamma_, vk->sk, ct);
     assert(!mpz_cmp(got, s_i));
 
     mpz_mul_mod(alpha_s_i, vk->alpha, s_i, gamma.p);
-    decrypt(got, gamma, vk->sk, crs->alpha_s[i+1]);
+    decompress_encryption(ct, gamma_, gamma_.rstate, crs->alpha_s[i+1]);
+    decrypt(got, gamma_, vk->sk, ct);
     assert(!mpz_cmp(got, alpha_s_i));
   }
 
@@ -33,6 +43,8 @@ void test_crs()
   crs_clear(crs, gamma);
   vk_clear(vk, gamma);
   param_clear(&gamma);
+  param_clear(&gamma_);
+  ct_clear(ct, gamma);
 }
 
 
