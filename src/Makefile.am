@@ -10,4 +10,3 @@ test_lwe_SOURCES = test_lwe.c $(LWE)
 test_snark_SOURCES = test_snark.c $(LWE) $(SNARK)
 test_ssp_SOURCES = test_ssp.c $(LWE) $(SSP)
 benchmark_lwe_SOURCES = benchmark_lwe.c $(LWE)
-#group_bench_LDADD = -lcrypto -lssl
