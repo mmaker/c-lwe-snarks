@@ -22,8 +22,8 @@ void write_ssp(int fd)
   mpz_t a;
   uint8_t out[GAMMA_P_BYTES] = {0};
 
-  for (size_t m = 0; m < GAMMA_M + 1; m++) {
-    for (size_t i = 0; i < GAMMA_D; i++) {
+  for (size_t m = 0; m < GAMMA_M+1; m++) {
+    for (size_t i = 0; i < GAMMA_D+1; i++) {
       mpz_urandomm(a, gamma.rstate, gamma.p);
       mpz_export(out, NULL, 1, sizeof(uint8_t), 0, 0, a);
 
@@ -41,11 +41,11 @@ void read_polynomial(int fd, poly_t pp, uint32_t i)
 {
   uint8_t repr[GAMMA_P_BYTES];
 
-  const off_t offset = i * GAMMA_P_BYTES * GAMMA_D;
+  const off_t offset = i * GAMMA_P_BYTES * (GAMMA_D+1);
   lseek(fd, offset, SEEK_SET);
   read(fd, repr, GAMMA_P_BYTES);
 
-  for (size_t i = 0; i < GAMMA_D; i++) {
+  for (size_t i = 0; i < (GAMMA_D+1); i++) {
     mpz_import(pp[i], GAMMA_P_BYTES, 1, sizeof(uint8_t), 0, 0, repr);
   }
 }

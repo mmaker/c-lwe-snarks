@@ -3,7 +3,7 @@
 
 #include "lwe.h"
 
-typedef mpz_t poly_t[GAMMA_D];
+typedef mpz_t poly_t[GAMMA_D+1];
 
 
 void write_ssp(int fd);

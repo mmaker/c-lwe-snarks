@@ -2,22 +2,27 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #include "ssp.h"
 
 void test_read_write()
 {
   int fds[2];
-  pipe2(fds, O_NONBLOCK);
+  pipe(fds);
 
-  poly_t pp;
-  mpz_initv(pp, GAMMA_D);
+  if (!fork()) {
+    write_ssp(fds[1]);
+  } else {
+    poly_t pp;
 
-  write_ssp(fds[1]);
-  read_polynomial(fds[0], pp, 0);
+    mpz_initv(pp, GAMMA_D);
+    read_polynomial(fds[0], pp, 0);
 
-  assert(1);
-  mpz_clearv(pp, GAMMA_D);
+    gmp_printf("%Zd\n", pp[0]);
+    mpz_clearv(pp, GAMMA_D);
+ }
 }
 
 int main()

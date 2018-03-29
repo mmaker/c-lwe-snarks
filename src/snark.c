@@ -4,16 +4,18 @@
 
 #include "lwe.h"
 #include "snark.h"
+#include "ssp.h"
 
 
-void crs_gen(crs_t crs, vk_t vk, gamma_t gamma) {
-  mpz_t alpha, s, s_i, alpha_s_i;
-  mpz_inits(alpha, s, s_i, alpha_s_i, NULL);
+void crs_gen(crs_t crs, vk_t vk, gamma_t gamma, int ssp_fd) {
+  mpz_t alpha, beta, s, s_i, t_i, alpha_s_i;
+  mpz_inits(alpha, beta, s, s_i, t_i, alpha_s_i, NULL);
   ctx_t ct;
   ct_init(ct, gamma);
 
   mpz_urandomm(s, gamma.rstate, gamma.p);
   mpz_urandomm(alpha, gamma.rstate, gamma.p);
+  mpz_urandomm(beta, gamma.rstate, gamma.p);
 
   // XXX some of these can be removed.
   key_gen(vk->sk, gamma);
@@ -32,27 +34,42 @@ void crs_gen(crs_t crs, vk_t vk, gamma_t gamma) {
   gmp_randseed(rs, mpz_rseed);
   mpz_clear(mpz_rseed);
 
+  /* α s^0 */
   mpz_set_ui(s_i, 1);
   mpz_mul_mod(alpha_s_i, s_i, alpha, gamma.p);
   mpz_init(crs->alpha_s[0]);
   encrypt(ct, gamma, rs, vk->sk, alpha_s_i);
   mpz_set(crs->alpha_s[0], ct->b);
 
+  /* initialize β t (s) */
+  poly_t tt;
+  mpz_initv(tt, GAMMA_D + 1);
+  read_polynomial(ssp_fd, tt, 0);
+  mpz_init_set(crs->beta_t, tt[0]);
   for (size_t i = 0; i < gamma.d; i++) {
+    /* s^i  */
     mpz_init(crs->s[i]);
     mpz_mul_mod(s_i, s_i, s, gamma.p);
     encrypt(ct, gamma, rs, vk->sk, s_i);
     mpz_set(crs->s[i], ct->b);
 
+    /* α s^i */
     mpz_init(crs->alpha_s[i+1]);
     mpz_mul_mod(alpha_s_i, s_i, alpha, gamma.p);
     // XXX: change the error
     encrypt(ct, gamma, rs, vk->sk, alpha_s_i);
     mpz_set(crs->alpha_s[i+1], ct->b);
+
+    /* β t(s) - generate t(s) */
+    mpz_addmul(crs->beta_t, tt[i+1], s_i);
   }
+
+  /* β t(s) */
+  mpz_mul_mod(crs->beta_t, crs->beta_t, beta, gamma.p);
+
   memmove(crs->rseed, rseed, sizeof(rseed_t));
 
-  mpz_clears(alpha, s, s_i, alpha_s_i, NULL);
+  mpz_clears(alpha, beta, s, s_i, alpha_s_i, NULL);
   ct_clear(ct, gamma);
 }
 
