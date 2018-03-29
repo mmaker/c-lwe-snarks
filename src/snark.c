@@ -63,6 +63,7 @@ void vk_clear(vk_t vk, gamma_t gamma)
   mpz_clear(vk->alpha);
   key_clear(vk->sk, gamma);
 }
+
 void crs_clear(crs_t crs, gamma_t gamma)
 {
   mpz_clearv(crs->s, gamma.d);

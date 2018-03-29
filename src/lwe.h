@@ -55,9 +55,7 @@ void encrypt(ctx_t c, gamma_t gamma, gmp_randstate_t rs, sk_t sk, mpz_t m)
 
 
 void decrypt(mpz_t m, gamma_t gamma, sk_t sk, ctx_t ct);
-
-void eval(ctx_t rop, gamma_t gamma, ctx_t c[], mpz_t *coeff, size_t d);
-void clear_lin_comb(mpz_t rop, mpz_t *m, mpz_t *coeffs, gamma_t gamma, size_t N);
+void eval(ctx_t rop, gamma_t gamma, ctx_t c[], mpz_t coeffs[], size_t d);
 
 
 #define ct_clearv(vs, len, gamma) do {              \
@@ -73,8 +71,8 @@ void clear_lin_comb(mpz_t rop, mpz_t *m, mpz_t *coeffs, gamma_t gamma, size_t N)
   }                                                 \
 } while (0)
 
-#define mpz_initv(vs, len) do {                    \
-  for (size_t i = 0; i < len; i++) {                \
-    mpz_init((vs)[i]);                             \
-  }                                                 \
-} while (0)
+#define mpz_initv(vs, len) do {                 \
+    for (size_t i = 0; i < len; i++) {          \
+      mpz_init((vs)[i]);                        \
+    }                                           \
+  } while (0)
