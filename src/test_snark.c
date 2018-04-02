@@ -10,7 +10,7 @@ void test_crs()
   crs_t crs;
   vk_t vk;
   gamma_t gamma = param_gen();
-  crs_gen(crs, vk, gamma);
+  crs_gen(crs, vk, gamma, 0);
 
   mpz_t s_i, alpha_s_i, got;
   mpz_init_set_ui(s_i, 1);
@@ -47,8 +47,46 @@ void test_crs()
   ct_clear(ct, gamma);
 }
 
+void test_verifier()
+{
+  crs_t crs;
+  vk_t vk;
+  gamma_t gamma = param_gen();
+  crs_gen(crs, vk, gamma, 0);
+
+  proof_t proof;
+  for (size_t i = 0; i < 5; i++) {
+    ct_init(&proof[i], gamma);
+  }
+
+
+  mpz_t h_s, hath_s, hatv_s, w_s, b_s;
+  mpz_inits(h_s, hath_s, hatv_s, w_s, b_s, NULL);
+  mpz_urandomm(h_s, gamma.rstate, gamma.p);
+  mpz_urandomm(w_s, gamma.rstate, gamma.p);
+  mpz_mul_mod(hath_s, h_s, vk->alpha, gamma.p);
+  mpz_mul_mod(b_s, w_s, vk->beta, gamma.p);
+
+  encrypt(&proof[0], gamma, gamma.rstate, vk->sk, h_s);
+  encrypt(&proof[1], gamma, gamma.rstate, vk->sk, hath_s);
+  encrypt(&proof[3], gamma, gamma.rstate, vk->sk, w_s);
+  encrypt(&proof[4], gamma, gamma.rstate, vk->sk, b_s);
+
+  assert(verifier(gamma, vk, proof));
+
+
+  mpz_clears(h_s, hath_s, hatv_s, w_s, b_s, NULL);
+  for (size_t i = 0; i < 5; i++) {
+    ct_clear(&proof[i], gamma);
+  }
+  param_clear(&gamma);
+  vk_clear(vk, gamma);
+  crs_clear(crs, gamma);
+}
+
 
 int main() {
   test_crs();
+  test_verifier();
   return EXIT_SUCCESS;
 }

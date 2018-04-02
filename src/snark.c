@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/random.h>
@@ -19,9 +20,10 @@ void crs_gen(crs_t crs, vk_t vk, gamma_t gamma, int ssp_fd) {
 
   // XXX some of these can be removed.
   key_gen(vk->sk, gamma);
-  mpz_inits(vk->s, vk->alpha, NULL);
+  mpz_inits(vk->s, vk->alpha, vk->beta, NULL);
   mpz_set(vk->s, s);
   mpz_set(vk->alpha, alpha);
+  mpz_set(vk->beta, beta);
 
   // create a new PRG that will be used to reproduce encryptions
   gmp_randstate_t rs;
@@ -73,6 +75,41 @@ void crs_gen(crs_t crs, vk_t vk, gamma_t gamma, int ssp_fd) {
   ct_clear(ct, gamma);
 }
 
+
+void prover(proof_t proof, crs_t crs, mpz_t witness[]);
+bool verifier(gamma_t gamma, vk_t vk, proof_t proof) {
+  bool result = false;
+  mpz_t h_s, hath_s, hatv_s, w_s, b_s;
+  mpz_t test;
+  mpz_inits(h_s, hath_s, hatv_s, w_s, b_s, NULL);
+  mpz_init(test);
+
+  /* decrypt the proof */
+  decrypt(h_s, gamma, vk->sk, &proof[0]);
+  decrypt(hath_s, gamma, vk->sk, &proof[1]);
+  decrypt(hatv_s, gamma, vk->sk, &proof[2]);
+  decrypt(w_s, gamma, vk->sk, &proof[3]);
+  decrypt(b_s, gamma, vk->sk, &proof[4]);
+
+  /*  eq-pke  */
+  mpz_mul(test, vk->alpha, h_s);
+  mpz_sub(test, test, hath_s);
+  mpz_mod(test, test, gamma.p);
+  if (mpz_sgn(test)) goto end;
+
+  /* eq-lin */
+  mpz_mul(test, vk->beta, w_s);
+  mpz_sub(test, test, b_s);
+  mpz_mod(test, test, gamma.p);
+  if (mpz_sgn(test)) goto end;
+
+  result = true;
+
+ end:
+  mpz_clears(h_s, hath_s, hatv_s, w_s, b_s, NULL);
+  mpz_clear(test);
+  return result;
+}
 
 void vk_clear(vk_t vk, gamma_t gamma)
 {
