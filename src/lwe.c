@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-
+#include <unistd.h>
 #include <sys/mman.h>
 #include <sys/random.h>
 
@@ -181,20 +181,16 @@ void eval(ct_t rop, gamma_t gamma, uint8_t c8[], mpz_t coeff[], size_t d)
 
 void eval_fd(ct_t rop, gamma_t gamma, int cfd, mpz_t coeff[], size_t d)
 {
-  const size_t length = d * CT_BYTES;
-  uint8_t *c8 = mmap(NULL, length, PROT_READ, MAP_PRIVATE, cfd, 0);
-  madvise(c8, length, MADV_SEQUENTIAL);
-
   ct_t ct;
   ct_init(ct);
 
+  uint8_t buf[CT_BYTES];
+
   for (size_t i = 0; i != d; i++) {
-    ct_import(ct, &c8[i * CT_BYTES]);
+    read(cfd, buf, CT_BYTES);
+    ct_import(ct, buf);
     ct_mul_scalar(ct, gamma, ct, coeff[i]);
     ct_add(rop, gamma, rop, ct);
-    madvise(c8, i*CT_BYTES, MADV_REMOVE);
   }
   ct_clear(ct);
-
-  munmap(c8, d * CT_BYTES);
 }
