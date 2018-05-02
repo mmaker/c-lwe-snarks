@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <string.h>
 #include <stdint.h>
@@ -82,6 +83,14 @@ void test_correctness()
 
 void dot_product(mpz_t rop, mpz_t modulus, mpz_t a[], mpz_t b[], size_t len);
 
+
+#define fail_if_error() do {                    \
+  if (errno > 0) {                              \
+    perror("Failed");                           \
+    exit(EXIT_FAILURE);                         \
+  }                                             \
+  } while(0)
+
 void test_eval()
 {
   gamma_t gamma = param_gen();
@@ -94,8 +103,9 @@ void test_eval()
     mpz_t m[d], coeffs[d];
     ct_t ct;
 
-    //int cfd = open("/tmp/coeffs", O_CREAT | O_WRONLY);
-    uint8_t buf[CT_BYTES * d];
+    int cfd = open("/tmp/coeffs", O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR);
+    fail_if_error();
+    uint8_t buf[d * CT_BYTES];
 
     for(size_t i = 0; i != d; i++) {
       mpz_init(m[i]);
@@ -105,18 +115,19 @@ void test_eval()
       mpz_urandomm(coeffs[i], gamma.rstate, gamma.p);
       encrypt(ct, gamma, gamma.rstate, sk, m[i]);
       ct_export(&buf[i * CT_BYTES], ct);
-      //write(cfd, buf, CT_BYTES);
     }
-    //close(cfd);
+    write(cfd, buf, d * CT_BYTES);
+    close(cfd);
+    fail_if_error();
 
     ct_t evaluated;
     ct_init(evaluated);
 
-    //cfd = open("/tmp/coeffs", O_RDONLY);
-    //uint8_t *cts = mmap(NULL, d * CT_BYTES, PROT_READ, MAP_PRIVATE, cfd, 0);
-    eval(evaluated, gamma, buf, coeffs, d);
-    //munmap(ct, d * CT_BYTES);
-    //close(cfd);
+    cfd = open("/tmp/coeffs", O_RDONLY);
+    fail_if_error();
+    eval_fd(evaluated, gamma, cfd, coeffs, d);
+    close(cfd);
+    fail_if_error();
 
     mpz_t got;
     mpz_init(got);

@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include <sys/mman.h>
 #include <sys/random.h>
 
 #include <gmp.h>
@@ -175,4 +176,13 @@ void eval(ct_t rop, gamma_t gamma, uint8_t c8[], mpz_t coeff[], size_t d)
     ct_add(rop, gamma, rop, ct);
   }
   ct_clear(ct);
+}
+
+
+void eval_fd(ct_t rop, gamma_t gamma, int cfd, mpz_t coeff[], size_t d)
+{
+  uint8_t *c8 = mmap(NULL, d * CT_BYTES, PROT_READ, MAP_PRIVATE, cfd, 0);
+  // XXX use perror here
+  eval(rop, gamma, c8, coeff, d);
+  munmap(c8, d * CT_BYTES);
 }

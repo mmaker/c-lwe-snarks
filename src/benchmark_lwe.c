@@ -21,8 +21,8 @@ void benchmark_encrypt()
   mpz_t m;
   mpz_init(m);
 
-  ctx_t c;
-  ct_init(c, gamma);
+  ct_t c;
+  ct_init(c);
 
   INIT_TIMEIT();
   for (size_t i = 0; i < 1e4; i++) {

@@ -58,7 +58,7 @@ void encrypt(ct_t c, gamma_t gamma, gmp_randstate_t rs, sk_t sk, mpz_t m)
 
 void decrypt(mpz_t m, gamma_t gamma, sk_t sk, ct_t ct);
 void eval(ct_t rop, gamma_t gamma, uint8_t c8[], mpz_t coeffs[], size_t d);
-
+void eval_fd(ct_t rop, gamma_t gamma, int cfd, mpz_t coeff[], size_t d);
 
 #define ct_clearv(vs, len) do {                     \
     for (size_t i = 0; i < len; i++) {              \
