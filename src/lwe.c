@@ -70,7 +70,7 @@ void key_gen(sk_t sk, gamma_t gamma)
 
 void key_clear(sk_t sk, gamma_t gamma)
 {
-  mpz_clearv(sk, gamma.n);
+  mpz_clearv(sk, GAMMA_N);
 }
 
 void ct_init(ct_t ct)

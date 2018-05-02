@@ -97,7 +97,7 @@ void test_eval()
   sk_t sk;
   key_gen(sk, gamma);
 
-  const size_t d = 1;
+  const size_t d = 10;
 
   for (size_t tries = 0; tries != 10; tries++) {
     mpz_t m[d], coeffs[d];
