@@ -71,3 +71,10 @@ void eval(ct_t rop, gamma_t gamma, ct_t c[], mpz_t coeffs[], size_t d);
       mpz_init((vs)[i]);                        \
     }                                           \
   } while (0)
+
+
+#define mpz_urandommv(vs, rstate, mod, len) do {        \
+    for (size_t i = 0; i < len; i++) {                  \
+      mpz_urandomm(vs[i], rstate, mod);                 \
+    }                                                   \
+} while (0)

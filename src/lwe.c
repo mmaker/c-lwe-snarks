@@ -63,10 +63,8 @@ void param_clear(gamma_t *g)
 
 void key_gen(sk_t sk, gamma_t gamma)
 {
-  for (size_t i = 0; i < gamma.n; i++) {
-    mpz_init(sk[i]);
-    mpz_urandomm(sk[i], gamma.rstate, gamma.q);
-  }
+  mpz_initv(sk, GAMMA_N);
+  mpz_urandommv(sk, gamma.rstate, gamma.q, GAMMA_N);
 }
 
 void key_clear(sk_t sk, gamma_t gamma)
@@ -105,9 +103,7 @@ void encrypt1(ct_t c, gamma_t gamma, gmp_randstate_t rs, sk_t sk, mpz_t m, void 
   mpz_mul(c[GAMMA_N], e, gamma.p);
 
   // sample a
-  for (size_t i=0; i < GAMMA_N; i++) {
-    mpz_urandomm(c[i], rs, gamma.q);
-  }
+  mpz_urandommv(c, rs, gamma.q, GAMMA_N);
 
   dot_product(c[GAMMA_N], gamma.q, sk, c, GAMMA_N);
   mpz_add(c[GAMMA_N], c[GAMMA_N], m);
@@ -118,12 +114,8 @@ void encrypt1(ct_t c, gamma_t gamma, gmp_randstate_t rs, sk_t sk, mpz_t m, void 
 
 void decompress_encryption(ct_t c, gamma_t gamma, gmp_randstate_t rs, mpz_t b)
 {
-  size_t i = 0;
-  while (i++ < GAMMA_N) {
-    mpz_urandomm(c[i], rs, gamma.q);
-  }
-
-  mpz_set(c[i], b);
+  mpz_urandommv(c, rs, gamma.q, GAMMA_N);
+  mpz_set(c[GAMMA_N], b);
 }
 
 void decrypt(mpz_t m, gamma_t gamma, sk_t sk, ct_t ct)
