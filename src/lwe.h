@@ -17,7 +17,11 @@ typedef struct gamma {
 } gamma_t;
 
 #define GAMMA_N 1470
+#define GAMMA_LOGQ 736
+#define GAMMA_P 0xfffffffb
 #define GAMMA_D (1<<15)
+#define LOGQ_BYTES (92)
+#define CT_BYTES (LOGQ_BYTES * (GAMMA_N+1))
 
 gamma_t param_gen();
 gamma_t param_gen_from_seed(rseed_t rseed);
@@ -39,6 +43,9 @@ typedef mpz_t ct_t[GAMMA_N+1];
 void ct_init(ct_t ct);
 void ct_clear(ct_t ct);
 
+void ct_export(uint8_t *buf, ct_t ct);
+void ct_import(ct_t ct, uint8_t *buf);
+
 void decompress_encryption(ct_t c, gamma_t gamma, gmp_randstate_t rs, mpz_t b);
 void encrypt1(ct_t c, gamma_t gamma, gmp_randstate_t rs, sk_t sk, mpz_t m, void (*chi)(mpz_t, gamma_t));
 
@@ -50,7 +57,7 @@ void encrypt(ct_t c, gamma_t gamma, gmp_randstate_t rs, sk_t sk, mpz_t m)
 
 
 void decrypt(mpz_t m, gamma_t gamma, sk_t sk, ct_t ct);
-void eval(ct_t rop, gamma_t gamma, ct_t c[], mpz_t coeffs[], size_t d);
+void eval(ct_t rop, gamma_t gamma, uint8_t c8[], mpz_t coeffs[], size_t d);
 
 
 #define ct_clearv(vs, len) do {                     \
@@ -68,7 +75,7 @@ void eval(ct_t rop, gamma_t gamma, ct_t c[], mpz_t coeffs[], size_t d);
 
 #define mpz_initv(vs, len) do {                 \
     for (size_t i = 0; i < len; i++) {          \
-      mpz_init((vs)[i]);                        \
+      mpz_init2((vs)[i], GAMMA_LOGQ);           \
     }                                           \
   } while (0)
 
