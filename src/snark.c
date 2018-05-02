@@ -77,12 +77,26 @@ void crs_gen(crs_t crs, vk_t vk, gamma_t gamma, int ssp_fd) {
 
 
 void prover(proof_t proof, crs_t crs, mpz_t witness[]);
-bool verifier(gamma_t gamma, vk_t vk, proof_t proof) {
+bool verifier(gamma_t gamma, int ssp_fd, vk_t vk, proof_t proof) {
   bool result = false;
-  mpz_t h_s, hath_s, hatv_s, w_s, b_s;
+  mpz_t h_s, hath_s, hatv_s, w_s, b_s, t_s, v_s;
   mpz_t test;
-  mpz_inits(h_s, hath_s, hatv_s, w_s, b_s, NULL);
+  mpz_inits(h_s, hath_s, hatv_s, w_s, b_s, t_s, v_s, NULL);
   mpz_init(test);
+
+  poly_t pp;
+  /* t_s */
+  poly_init(pp);
+  read_polynomial(ssp_fd, pp, T);
+  evaluate_polynomial(t_s, pp, vk->s, gamma.p);
+
+  /* v_s */
+  read_polynomial(ssp_fd, pp, V(0));
+  // XXX this is not correct
+  evaluate_polynomial(v_s, pp, vk->s, gamma.p);
+  mpz_add(v_s, v_s, w_s);
+
+  poly_clear(pp);
 
   /* decrypt the proof */
   decrypt(h_s, gamma, vk->sk, &proof[0]);
@@ -97,16 +111,28 @@ bool verifier(gamma_t gamma, vk_t vk, proof_t proof) {
   mpz_mod(test, test, gamma.p);
   if (mpz_sgn(test)) goto end;
 
+  mpz_mul(test, vk->alpha, v_s);
+  mpz_sub(test, test, hatv_s);
+  mpz_mod(test, test, gamma.p);
+  if (mpz_sgn(test)) goto end;
+
   /* eq-lin */
   mpz_mul(test, vk->beta, w_s);
   mpz_sub(test, test, b_s);
   mpz_mod(test, test, gamma.p);
   if (mpz_sgn(test)) goto end;
 
+  /* eq-div */
+  mpz_mul(test, h_s, t_s);
+  mpz_mul(v_s, v_s, v_s);
+  mpz_sub(test, test, v_s);
+  mpz_add_ui(test, test, 1);
+  if (mpz_sgn(test)) goto end;
+
   result = true;
 
  end:
-  mpz_clears(h_s, hath_s, hatv_s, w_s, b_s, NULL);
+  mpz_clears(h_s, hath_s, hatv_s, w_s, b_s, t_s, v_s, NULL);
   mpz_clear(test);
   return result;
 }

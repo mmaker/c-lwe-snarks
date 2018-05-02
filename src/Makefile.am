@@ -5,8 +5,9 @@ LWE = lwe.c lwe.h
 SNARK = snark.c snark.h
 SSP = ssp.c ssp.h
 
-bin_PROGRAMS = benchmark_lwe
+bin_PROGRAMS = benchmark_lwe benchmark_eval
 test_lwe_SOURCES = test_lwe.c $(LWE)
 test_ssp_SOURCES = test_ssp.c $(LWE) $(SSP)
 test_snark_SOURCES = test_snark.c $(LWE) $(SNARK) $(SSP)
 benchmark_lwe_SOURCES = benchmark_lwe.c $(LWE)
+benchmark_eval_SOURCES = benchmark_eval.c $(LWE)

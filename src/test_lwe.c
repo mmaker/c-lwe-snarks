@@ -21,8 +21,8 @@ void test_correctness()
   mpz_init(m);
   mpz_init(_m);
 
-  ctx_t c;
-  ct_init(c, gamma);
+  ct_t c;
+  ct_init(c);
 
   for (size_t i = 0; i < 10; i++) {
     mpz_urandomm(m, gamma.rstate, gamma.p);
@@ -31,7 +31,7 @@ void test_correctness()
     assert(!mpz_cmp(m, _m));
   }
 
-  ct_clear(c, gamma);
+  ct_clear(c);
   key_clear(sk, gamma);
   mpz_clears(m, _m, NULL);
   param_clear(&gamma);
@@ -51,19 +51,19 @@ void test_eval()
 
   for (size_t tries = 0; tries != 10; tries++) {
     mpz_t m[d], coeffs[d];
-    ctx_t ct[d];
+    ct_t ct[d];
 
     for(size_t i = 0; i != d; i++) {
       mpz_init(m[i]);
       mpz_init(coeffs[i]);
-      ct_init(ct[i], gamma);
+      ct_init(ct[i]);
       mpz_urandomm(m[i], gamma.rstate, gamma.p);
       mpz_urandomm(coeffs[i], gamma.rstate, gamma.p);
       encrypt(ct[i], gamma, gamma.rstate, sk, m[i]);
     }
 
-    ctx_t evaluated;
-    ct_init(evaluated, gamma);
+    ct_t evaluated;
+    ct_init(evaluated);
     eval(evaluated, gamma, ct, coeffs, d);
 
     mpz_t got;
@@ -78,8 +78,8 @@ void test_eval()
     mpz_clears(got, correct, NULL);
     mpz_clearv(m, d);
     mpz_clearv(coeffs, d);
-    ct_clear(evaluated, gamma);
-    ct_clearv(ct, d, gamma);
+    ct_clear(evaluated);
+    ct_clearv(ct, d);
   }
 
   key_clear(sk, gamma);

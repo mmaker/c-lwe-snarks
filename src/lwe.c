@@ -24,11 +24,11 @@ gamma_t param_gen_from_seed(rseed_t rseed)
 {
   gamma_t gamma;
   mpz_init(gamma.p);
-  mpz_set_ui(gamma.p, 469572863);
+  mpz_set_ui(gamma.p, 0xfffffffb);
 
   // mpz_init_set_str
   mpz_init(gamma.q);
-  mpz_ui_pow_ui(gamma.q, 2, 800);
+  mpz_ui_pow_ui(gamma.q, 2, 736);
 
   gamma.log_sigma = 650;
   gamma.n = GAMMA_N;
@@ -74,20 +74,14 @@ void key_clear(sk_t sk, gamma_t gamma)
   mpz_clearv(sk, gamma.n);
 }
 
-void ct_init(ctx_t ct, gamma_t gamma)
+void ct_init(ct_t ct)
 {
-  ct->a = malloc(sizeof(mpz_t) * gamma.n);
-  for (size_t i = 0; i != gamma.n; i++) {
-    mpz_init(ct->a[i]);
-  }
-  mpz_init(ct->b);
+  mpz_initv(ct, GAMMA_N + 1);
 }
 
-void ct_clear(ctx_t ct, gamma_t gamma)
+void ct_clear(ct_t ct)
 {
-  mpz_clear(ct->b);
-  mpz_clearv(ct->a, gamma.n);
-  free(ct->a);
+  mpz_clearv(ct, GAMMA_N + 1);
 }
 
 void errdist_uniform(mpz_t e, gamma_t gamma)
@@ -99,7 +93,7 @@ void errdist_uniform(mpz_t e, gamma_t gamma)
   mpz_clrbit(e, bit_pos);
 }
 
-void encrypt1(ctx_t c, gamma_t gamma, gmp_randstate_t rs, sk_t sk, mpz_t m, void (*chi)(mpz_t, gamma_t))
+void encrypt1(ct_t c, gamma_t gamma, gmp_randstate_t rs, sk_t sk, mpz_t m, void (*chi)(mpz_t, gamma_t))
 {
   assert(mpz_cmp(gamma.p, m) > 0);
 
@@ -108,50 +102,45 @@ void encrypt1(ctx_t c, gamma_t gamma, gmp_randstate_t rs, sk_t sk, mpz_t m, void
   mpz_init(e);
   (*chi)(e, gamma);
 
-  mpz_mul(c->b, e, gamma.p);
+  mpz_mul(c[GAMMA_N], e, gamma.p);
 
   // sample a
-  for (size_t i=0; i < gamma.n; i++) {
-    mpz_urandomm(c->a[i], rs, gamma.q);
+  for (size_t i=0; i < GAMMA_N; i++) {
+    mpz_urandomm(c[i], rs, gamma.q);
   }
 
-  dot_product(c->b, gamma.q, sk, c->a, gamma.n);
-  mpz_add(c->b, c->b, m);
-  mpz_mod(c->b, c->b, gamma.q);
+  dot_product(c[GAMMA_N], gamma.q, sk, c, GAMMA_N);
+  mpz_add(c[GAMMA_N], c[GAMMA_N], m);
+  mpz_mod(c[GAMMA_N], c[GAMMA_N], gamma.q);
 
   mpz_clear(e);
 }
 
-void decompress_encryption(ctx_t c, gamma_t gamma, gmp_randstate_t rs, mpz_t b)
+void decompress_encryption(ct_t c, gamma_t gamma, gmp_randstate_t rs, mpz_t b)
 {
-  for (size_t i=0; i < gamma.n; i++) {
-    mpz_urandomm(c->a[i], rs, gamma.q);
+  size_t i = 0;
+  while (i++ < GAMMA_N) {
+    mpz_urandomm(c[i], rs, gamma.q);
   }
 
-  mpz_set(c->b, b);
+  mpz_set(c[i], b);
 }
 
-void decrypt(mpz_t m, gamma_t gamma, sk_t sk, ctx_t ct)
+void decrypt(mpz_t m, gamma_t gamma, sk_t sk, ct_t ct)
 {
-  dot_product(m, gamma.q, ct->a, sk, gamma.n);
-  mpz_sub(m, ct->b, m);
+  dot_product(m, gamma.q, ct, sk, GAMMA_N);
+  mpz_sub(m, ct[GAMMA_N], m);
   mpz_mod(m, m, gamma.q);
   mpz_mod(m, m, gamma.p);
 }
 
-void eval(ctx_t rop, gamma_t gamma, ctx_t c[], mpz_t coeff[], size_t d)
+void eval(ct_t rop, gamma_t gamma, ct_t c[], mpz_t coeff[], size_t d)
 {
-  for (size_t i = 0; i != gamma.n; i++) {
-    mpz_set_ui(rop->a[i], 0);
+  for (size_t i = 0; i != GAMMA_N+1; i++) {
+    mpz_set_ui(rop[i], 0);
     for (size_t j = 0; j != d; j++) {
-      mpz_addmul(rop->a[i], c[j]->a[i], coeff[j]);
+      mpz_addmul(rop[i], c[j][i], coeff[j]);
     }
-    mpz_mod(rop->a[i], rop->a[i], gamma.q);
+    mpz_mod(rop[i], rop[i], gamma.q);
   }
-
-  mpz_set_ui(rop->b, 0);
-  for (size_t j = 0; j != d; j++) {
-    mpz_addmul(rop->b, c[j]->b, coeff[j]);
-  }
-  mpz_mod(rop->b, rop->b, gamma.q);
 }

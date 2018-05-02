@@ -51,6 +51,19 @@ void read_polynomial(int fd, poly_t pp, uint32_t i)
 }
 
 
+void evaluate_polynomial(mpz_t rop, poly_t t, mpz_t x, mpz_t modulus) {
+  mpz_t x_i;
+  mpz_set(rop, t[0]);
+  mpz_init_set(x_i, x);
+  for (size_t i = 1; i < GAMMA_D+1; i++) {
+    mpz_addmul(rop, t[i], x_i);
+    mpz_mul(x_i, x_i, x);
+  }
+  mpz_mod(rop, rop, modulus);
+  mpz_clear(x_i);
+}
+
+
 bool mpz_eqv(mpz_t a[], mpz_t b[], size_t len)
 {
   if (len == 0) return false;

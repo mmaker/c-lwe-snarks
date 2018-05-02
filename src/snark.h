@@ -26,7 +26,7 @@ void crs_gen(crs_t crs, vk_t vk, gamma_t gamma, int ssp_fd);
 void crs_clear(crs_t crs, gamma_t gamma);
 void vk_clear(vk_t vk, gamma_t gamma);
 
-bool verifier(gamma_t gamma, vk_t vk, proof_t proof);
+bool verifier(gamma_t gamma, int ssp_fd, vk_t vk, proof_t proof);
 
 
 #define mpz_mul_mod(rop, a, b, mod) do {              \

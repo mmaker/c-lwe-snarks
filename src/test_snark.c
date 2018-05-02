@@ -1,16 +1,20 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "snark.h"
 
 
-void test_crs()
+void test_crs(int ssp_fd)
 {
   crs_t crs;
   vk_t vk;
   gamma_t gamma = param_gen();
-  crs_gen(crs, vk, gamma, 0);
+  crs_gen(crs, vk, gamma, ssp_fd);
 
   mpz_t s_i, alpha_s_i, got;
   mpz_init_set_ui(s_i, 1);
@@ -47,7 +51,7 @@ void test_crs()
   ct_clear(ct, gamma);
 }
 
-void test_verifier()
+void test_verifier(int ssp_fd)
 {
   crs_t crs;
   vk_t vk;
@@ -58,7 +62,6 @@ void test_verifier()
   for (size_t i = 0; i < 5; i++) {
     ct_init(&proof[i], gamma);
   }
-
 
   mpz_t h_s, hath_s, hatv_s, w_s, b_s;
   mpz_inits(h_s, hath_s, hatv_s, w_s, b_s, NULL);
@@ -72,8 +75,7 @@ void test_verifier()
   encrypt(&proof[3], gamma, gamma.rstate, vk->sk, w_s);
   encrypt(&proof[4], gamma, gamma.rstate, vk->sk, b_s);
 
-  assert(verifier(gamma, vk, proof));
-
+  assert(verifier(gamma, ssp_fd, vk, proof));
 
   mpz_clears(h_s, hath_s, hatv_s, w_s, b_s, NULL);
   for (size_t i = 0; i < 5; i++) {
@@ -86,7 +88,10 @@ void test_verifier()
 
 
 int main() {
-  test_crs();
-  test_verifier();
+  int ssp_fd = open("random_ssp", O_RDONLY);
+  test_crs(ssp_fd);
+  test_verifier(ssp_fd);
+  close(ssp_fd);
+
   return EXIT_SUCCESS;
 }

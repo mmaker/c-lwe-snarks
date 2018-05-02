@@ -17,7 +17,7 @@ void test_read_write()
   } else {
     poly_t pp;
 
-    mpz_initv(pp, GAMMA_D);
+    poly_init(pp);
     read_polynomial(fds[0], pp, 0);
 
     gmp_printf("%Zd\n", pp[0]);
