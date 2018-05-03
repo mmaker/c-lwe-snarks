@@ -193,14 +193,18 @@ void eval_fd(ct_t rop, gamma_t gamma, int cfd, mpz_t coeff[], size_t d)
 
   void *buf;
   posix_memalign(&buf, 8, CT_BLOCK);
+  // const size_t length = d * CT_BLOCK;
+  // uint8_t *c8 = mmap(NULL, length, PROT_READ, MAP_PRIVATE, cfd, 0);
+  // madvise(c8, length, MADV_SEQUENTIAL);
 
   for (size_t i = 0; i != d; i++) {
     read(cfd, buf, CT_BLOCK);
-    ct_import(ct, buf);
+    ct_import(ct, buf); //&c8[i * CT_BLOCK]);
     ct_mul_scalar(ct, gamma, ct, coeff[i]);
     ct_add(rop, gamma, rop, ct);
   }
 
   free(buf);
+  // munmap(c8, length);
   ct_clear(ct);
 }
