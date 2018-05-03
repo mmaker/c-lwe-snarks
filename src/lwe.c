@@ -132,8 +132,7 @@ void regev_decrypt(mpz_t m, gamma_t gamma, sk_t sk, ct_t ct)
 
 void ct_export(uint8_t *buf, ct_t ct)
 {
-  bzero(buf, CT_BYTES);
-  // export into file
+  bzero(buf, CT_BLOCK);
   for (size_t i = 0; i < GAMMA_N+1; i++) {
     mpz_export(&buf[i*LOGQ_BYTES], NULL, -1, sizeof(uint8_t), -1, 0, ct[i]);
   }
@@ -193,12 +192,10 @@ void eval_fd(ct_t rop, gamma_t gamma, int cfd, mpz_t coeff[], size_t d)
   ct_init(ct);
 
   void *buf;
-  posix_memalign(&buf, 1<<18, CT_BYTES);
+  posix_memalign(&buf, 8, CT_BLOCK);
 
   for (size_t i = 0; i != d; i++) {
-    read(cfd, buf, CT_BYTES);
-    perror("dioc");
-
+    read(cfd, buf, CT_BLOCK);
     ct_import(ct, buf);
     ct_mul_scalar(ct, gamma, ct, coeff[i]);
     ct_add(rop, gamma, rop, ct);

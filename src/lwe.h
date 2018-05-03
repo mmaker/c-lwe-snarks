@@ -19,9 +19,10 @@ typedef struct gamma {
 #define GAMMA_N 1470
 #define GAMMA_LOGQ 736
 #define GAMMA_P 0xfffffffb
-#define GAMMA_D (1<<15)
+#define GAMMA_D (1 << 15)
 #define LOGQ_BYTES (92)
 #define CT_BYTES (LOGQ_BYTES * (GAMMA_N+1))
+#define CT_BLOCK (1 << 18)
 
 gamma_t param_gen();
 gamma_t param_gen_from_seed(rseed_t rseed);

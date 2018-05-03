@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,9 +35,8 @@ void test_import_export()
   ct_init(c);
   ct_init(_c);
 
-  uint8_t buf[CT_BYTES];
+  uint8_t buf[CT_BLOCK];
   for (size_t i = 0; i < 10; i++) {
-
     mpz_urandomm(m, gamma.rstate, gamma.p);
     regev_encrypt(c, gamma, gamma.rstate, sk, m);
     ct_export(buf, c);
@@ -103,9 +104,9 @@ void test_eval()
     mpz_t m[d], coeffs[d];
     ct_t ct;
 
-    int cfd = open("/tmp/coeffs", O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR);
+    int cfd = open("/home/maker/coeffs", O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR);
     fail_if_error();
-    uint8_t buf[d * CT_BYTES];
+    uint8_t buf[d * CT_BLOCK];
 
     for(size_t i = 0; i != d; i++) {
       mpz_init(m[i]);
@@ -114,16 +115,16 @@ void test_eval()
       mpz_urandomm(m[i], gamma.rstate, gamma.p);
       mpz_urandomm(coeffs[i], gamma.rstate, gamma.p);
       regev_encrypt(ct, gamma, gamma.rstate, sk, m[i]);
-      ct_export(&buf[i * CT_BYTES], ct);
+      ct_export(&buf[i * CT_BLOCK], ct);
     }
-    write(cfd, buf, d * CT_BYTES);
+    write(cfd, buf, d * CT_BLOCK);
     close(cfd);
     fail_if_error();
 
     ct_t evaluated;
     ct_init(evaluated);
 
-    cfd = open("/tmp/coeffs", O_RDONLY);
+    cfd = open("/home/maker/coeffs", O_RDONLY | O_DIRECT);
     fail_if_error();
     eval_fd(evaluated, gamma, cfd, coeffs, d);
     close(cfd);

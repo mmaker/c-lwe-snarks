@@ -39,7 +39,7 @@ void benchmark_eval()
 
   int cfd = open(COEFFS_FILENAME, O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR);
   fail_if_error();
-  uint8_t buf[CT_BYTES];
+  uint8_t buf[CT_BLOCK];
 
   for (size_t i = 0; i != GAMMA_D; i++) {
     mpz_init(m[i]);
@@ -49,7 +49,7 @@ void benchmark_eval()
     mpz_urandomm(coeffs[i], gamma.rstate, gamma.p);
     regev_encrypt(ct, gamma, gamma.rstate, sk, m[i]);
     ct_export(buf, ct);
-    write(cfd, buf, CT_BYTES);
+    write(cfd, buf, CT_BLOCK);
   }
   close(cfd);
   fail_if_error();
