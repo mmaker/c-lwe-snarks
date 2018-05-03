@@ -37,7 +37,7 @@ void test_import_export()
   for (size_t i = 0; i < 10; i++) {
 
     mpz_urandomm(m, gamma.rstate, gamma.p);
-    encrypt(c, gamma, gamma.rstate, sk, m);
+    regev_encrypt(c, gamma, gamma.rstate, sk, m);
     ct_export(buf, c);
     ct_import(_c, buf);
     for (size_t i = 0; i < GAMMA_N+1; i++) {
@@ -69,8 +69,8 @@ void test_correctness()
 
   for (size_t i = 0; i < 1e1; i++) {
     mpz_urandomm(m, gamma.rstate, gamma.p);
-    encrypt(c, gamma, gamma.rstate, sk, m);
-    decrypt(_m, gamma, sk, c);
+    regev_encrypt(c, gamma, gamma.rstate, sk, m);
+    regev_decrypt(_m, gamma, sk, c);
     assert(!mpz_cmp(m, _m));
   }
 
@@ -113,7 +113,7 @@ void test_eval()
       ct_init(ct);
       mpz_urandomm(m[i], gamma.rstate, gamma.p);
       mpz_urandomm(coeffs[i], gamma.rstate, gamma.p);
-      encrypt(ct, gamma, gamma.rstate, sk, m[i]);
+      regev_encrypt(ct, gamma, gamma.rstate, sk, m[i]);
       ct_export(&buf[i * CT_BYTES], ct);
     }
     write(cfd, buf, d * CT_BYTES);
@@ -131,7 +131,7 @@ void test_eval()
 
     mpz_t got;
     mpz_init(got);
-    decrypt(got, gamma, sk, evaluated);
+    regev_decrypt(got, gamma, sk, evaluated);
 
     mpz_t correct;
     mpz_init(correct);

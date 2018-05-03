@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdio.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
@@ -92,7 +93,7 @@ void errdist_uniform(mpz_t e, gamma_t gamma)
   mpz_clrbit(e, bit_pos);
 }
 
-void encrypt1(ct_t c, gamma_t gamma, gmp_randstate_t rs, sk_t sk, mpz_t m, void (*chi)(mpz_t, gamma_t))
+void regev_encrypt1(ct_t c, gamma_t gamma, gmp_randstate_t rs, sk_t sk, mpz_t m, void (*chi)(mpz_t, gamma_t))
 {
   assert(mpz_cmp(gamma.p, m) > 0);
 
@@ -119,7 +120,7 @@ void decompress_encryption(ct_t c, gamma_t gamma, gmp_randstate_t rs, mpz_t b)
   mpz_set(c[GAMMA_N], b);
 }
 
-void decrypt(mpz_t m, gamma_t gamma, sk_t sk, ct_t ct)
+void regev_decrypt(mpz_t m, gamma_t gamma, sk_t sk, ct_t ct)
 {
   dot_product(m, gamma.q, ct, sk, GAMMA_N);
   mpz_sub(m, ct[GAMMA_N], m);
@@ -179,18 +180,30 @@ void eval(ct_t rop, gamma_t gamma, uint8_t c8[], mpz_t coeff[], size_t d)
 }
 
 
+#define fail_if_error() do {                    \
+    if (errno > 0) {                            \
+      perror("Failed" __FILE__ );  \
+      exit(EXIT_FAILURE);                       \
+    }                                           \
+  } while(0)
+
 void eval_fd(ct_t rop, gamma_t gamma, int cfd, mpz_t coeff[], size_t d)
 {
   ct_t ct;
   ct_init(ct);
 
-  uint8_t buf[CT_BYTES];
+  void *buf;
+  posix_memalign(&buf, 1<<18, CT_BYTES);
 
   for (size_t i = 0; i != d; i++) {
     read(cfd, buf, CT_BYTES);
+    perror("dioc");
+
     ct_import(ct, buf);
     ct_mul_scalar(ct, gamma, ct, coeff[i]);
     ct_add(rop, gamma, rop, ct);
   }
+
+  free(buf);
   ct_clear(ct);
 }

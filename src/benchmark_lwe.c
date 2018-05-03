@@ -27,10 +27,10 @@ void benchmark_encrypt()
   INIT_TIMEIT();
   for (size_t i = 0; i < 1e4; i++) {
     mpz_urandomm(m, gamma.rstate, gamma.p);
-    encrypt(c, gamma, gamma.rstate, sk, m);
+    regev_encrypt(c, gamma, gamma.rstate, sk, m);
 
     START_TIMEIT();
-    decrypt(m, gamma, sk, c);
+    regev_decrypt(m, gamma, sk, c);
     END_TIMEIT();
 
     printf(TIMEIT_FORMAT "\n", GET_TIMEIT());

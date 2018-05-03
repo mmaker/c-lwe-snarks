@@ -47,16 +47,16 @@ void ct_export(uint8_t *buf, ct_t ct);
 void ct_import(ct_t ct, uint8_t *buf);
 
 void decompress_encryption(ct_t c, gamma_t gamma, gmp_randstate_t rs, mpz_t b);
-void encrypt1(ct_t c, gamma_t gamma, gmp_randstate_t rs, sk_t sk, mpz_t m, void (*chi)(mpz_t, gamma_t));
+void regev_encrypt1(ct_t c, gamma_t gamma, gmp_randstate_t rs, sk_t sk, mpz_t m, void (*chi)(mpz_t, gamma_t));
 
 static inline
-void encrypt(ct_t c, gamma_t gamma, gmp_randstate_t rs, sk_t sk, mpz_t m)
+void regev_encrypt(ct_t c, gamma_t gamma, gmp_randstate_t rs, sk_t sk, mpz_t m)
 {
-  encrypt1(c, gamma, rs, sk, m, errdist_uniform);
+  regev_encrypt1(c, gamma, rs, sk, m, errdist_uniform);
 }
 
 
-void decrypt(mpz_t m, gamma_t gamma, sk_t sk, ct_t ct);
+void regev_decrypt(mpz_t m, gamma_t gamma, sk_t sk, ct_t ct);
 void eval(ct_t rop, gamma_t gamma, uint8_t c8[], mpz_t coeffs[], size_t d);
 void eval_fd(ct_t rop, gamma_t gamma, int cfd, mpz_t coeff[], size_t d);
 
