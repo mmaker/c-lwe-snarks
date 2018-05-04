@@ -32,7 +32,6 @@ gamma_t param_gen_from_seed(rseed_t rseed)
   mpz_init(gamma.q);
   mpz_ui_pow_ui(gamma.q, 2, GAMMA_LOGQ);
 
-  gamma.log_sigma = 650;
   gamma.n = GAMMA_N;
   gamma.d = GAMMA_D;
 
@@ -95,19 +94,16 @@ static inline void mpz_randomsgn(mpz_t dst, gamma_t gamma, const mpz_t src)
 
 void errdist_uniform(mpz_t e, gamma_t gamma)
 {
-  mpz_urandomb(e, gamma.rstate, gamma.log_sigma + 4);
-
-  const mp_bitcnt_t bit_pos = gamma.log_sigma + 3;
+  mpz_urandomb(e, gamma.rstate, GAMMA_LOG_SIGMA + 3);
   mpz_randomsgn(e, gamma, e);
-  mpz_clrbit(e, bit_pos);
 }
 
 void ct_smudge(ct_t ct, gamma_t gamma) {
   mpz_t smudging;
   mpz_init(smudging);
 
-  mpz_urandomb(smudging, gamma.rstate, GAMMA_SMUDGING);
-  //  mpz_randomsgn(smudging, smudging);
+  mpz_urandomb(smudging, gamma.rstate, GAMMA_LOG_SMUDGING);
+  mpz_randomsgn(smudging, gamma, smudging);
   mpz_mul(smudging, smudging, gamma.p);
   mpz_add(ct[GAMMA_N], ct[GAMMA_N], smudging);
   mpz_mod(ct[GAMMA_N], ct[GAMMA_N], gamma.q);
@@ -208,8 +204,6 @@ void eval(ct_t rop, gamma_t gamma, uint8_t c8[], mpz_t coeff[], size_t d)
     }                                           \
   } while(0)
 
-
-#define MAP_HUGE_2MB    (21 << MAP_HUGE_SHIFT)
 
 void eval_fd(ct_t rop, gamma_t gamma, int cfd, mpz_t coeff[], size_t d)
 {
