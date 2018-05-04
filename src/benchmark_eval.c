@@ -57,7 +57,7 @@ void benchmark_eval()
   ct_t evaluated;
   ct_init(evaluated);
 
-  cfd = open(COEFFS_FILENAME, O_RDONLY | O_DIRECT);
+  cfd = open(COEFFS_FILENAME, O_RDONLY | O_LARGEFILE);
   fail_if_error();
   START_TIMEIT();
   eval_fd(evaluated, gamma, cfd, coeffs, GAMMA_D);

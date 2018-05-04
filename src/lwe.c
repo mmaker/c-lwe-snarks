@@ -181,30 +181,29 @@ void eval(ct_t rop, gamma_t gamma, uint8_t c8[], mpz_t coeff[], size_t d)
 
 #define fail_if_error() do {                    \
     if (errno > 0) {                            \
-      perror("Failed" __FILE__ );  \
+      perror("Failed" __FILE__ );               \
       exit(EXIT_FAILURE);                       \
     }                                           \
   } while(0)
+
+
+#define MAP_HUGE_2MB    (21 << MAP_HUGE_SHIFT)
 
 void eval_fd(ct_t rop, gamma_t gamma, int cfd, mpz_t coeff[], size_t d)
 {
   ct_t ct;
   ct_init(ct);
 
-  void *buf;
-  posix_memalign(&buf, 8, CT_BLOCK);
-  // const size_t length = d * CT_BLOCK;
-  // uint8_t *c8 = mmap(NULL, length, PROT_READ, MAP_PRIVATE, cfd, 0);
-  // madvise(c8, length, MADV_SEQUENTIAL);
+  const size_t length = d * CT_BLOCK;
+  uint8_t *c8 = mmap(NULL, length, PROT_READ, MAP_PRIVATE, cfd, 0);
+  madvise(c8, length, MADV_SEQUENTIAL);
 
   for (size_t i = 0; i != d; i++) {
-    read(cfd, buf, CT_BLOCK);
-    ct_import(ct, buf); //&c8[i * CT_BLOCK]);
+    ct_import(ct, &c8[i * CT_BLOCK]);
     ct_mul_scalar(ct, gamma, ct, coeff[i]);
     ct_add(rop, gamma, rop, ct);
   }
 
-  free(buf);
-  // munmap(c8, length);
+  munmap(c8, length);
   ct_clear(ct);
 }

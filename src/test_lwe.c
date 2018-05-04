@@ -88,7 +88,6 @@ void dot_product(mpz_t rop, mpz_t modulus, mpz_t a[], mpz_t b[], size_t len);
 #define fail_if_error() do {                    \
   if (errno > 0) {                              \
     perror("Failed");                           \
-    exit(EXIT_FAILURE);                         \
   }                                             \
   } while(0)
 
@@ -124,7 +123,7 @@ void test_eval()
     ct_t evaluated;
     ct_init(evaluated);
 
-    cfd = open("/home/maker/coeffs", O_RDONLY | O_DIRECT);
+    cfd = open("/home/maker/coeffs", O_RDONLY | O_LARGEFILE);
     fail_if_error();
     eval_fd(evaluated, gamma, cfd, coeffs, d);
     close(cfd);
