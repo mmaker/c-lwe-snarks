@@ -84,12 +84,12 @@ void ct_clear(ct_t ct)
   mpz_clearv(ct, GAMMA_N+1);
 }
 
-static inline void mpz_randomsgn(mpz_t dst, const mpz_t src)
+static inline void mpz_randomsgn(mpz_t dst, gamma_t gamma, const mpz_t src)
 {
   uint8_t sign;
   getrandom(&sign, 1, GRND_NONBLOCK);
   if (sign & 0x01) {
-    mpz_neg(dst, src);
+    mpz_sub(dst, gamma.q, src);
   }
 }
 
@@ -98,7 +98,7 @@ void errdist_uniform(mpz_t e, gamma_t gamma)
   mpz_urandomb(e, gamma.rstate, gamma.log_sigma + 4);
 
   const mp_bitcnt_t bit_pos = gamma.log_sigma + 3;
-  mpz_randomsgn(e, e);
+  mpz_randomsgn(e, gamma, e);
   mpz_clrbit(e, bit_pos);
 }
 
@@ -107,9 +107,10 @@ void ct_smudge(ct_t ct, gamma_t gamma) {
   mpz_init(smudging);
 
   mpz_urandomb(smudging, gamma.rstate, GAMMA_SMUDGING);
-  mpz_randomsgn(smudging, smudging);
+  //  mpz_randomsgn(smudging, smudging);
   mpz_mul(smudging, smudging, gamma.p);
   mpz_add(ct[GAMMA_N], ct[GAMMA_N], smudging);
+  mpz_mod(ct[GAMMA_N], ct[GAMMA_N], gamma.q);
 
   mpz_clear(smudging);
 }

@@ -20,14 +20,21 @@
 #include <gmp.h>
 
 #include "lwe.h"
+#include "tests.h"
 
+
+#define setup()                                 \
+  gamma_t gamma = param_gen();                  \
+  sk_t sk;                                      \
+  key_gen(sk, gamma)
+
+#define teardown()                              \
+  key_clear(sk, gamma);                         \
+  param_clear(&gamma)
 
 void test_import_export()
 {
-  gamma_t gamma = param_gen();
-  sk_t sk;
-  key_gen(sk, gamma);
-
+  setup();
   mpz_t m;
   mpz_init(m);
 
@@ -48,18 +55,15 @@ void test_import_export()
 
   ct_clear(c);
   ct_clear(_c);
-  key_clear(sk, gamma);
   mpz_clear(m);
-  param_clear(&gamma);
+  teardown();
 }
 
 
 
 void test_correctness()
 {
-  gamma_t gamma = param_gen();
-  sk_t sk;
-  key_gen(sk, gamma);
+  setup();
 
   mpz_t m, _m;
   mpz_init(m);
@@ -76,10 +80,8 @@ void test_correctness()
   }
 
   ct_clear(c);
-  key_clear(sk, gamma);
   mpz_clears(m, _m, NULL);
-  param_clear(&gamma);
-
+  teardown();
 }
 
 void dot_product(mpz_t rop, mpz_t modulus, mpz_t a[], mpz_t b[], size_t len);
@@ -93,10 +95,7 @@ void dot_product(mpz_t rop, mpz_t modulus, mpz_t a[], mpz_t b[], size_t len);
 
 void test_eval()
 {
-  gamma_t gamma = param_gen();
-  sk_t sk;
-  key_gen(sk, gamma);
-
+  setup();
   const size_t d = 10;
 
   for (size_t tries = 0; tries != 10; tries++) {
@@ -145,21 +144,21 @@ void test_eval()
     ct_clear(ct);
   }
 
-  key_clear(sk, gamma);
-  param_clear(&gamma);
+  teardown();
 }
 
 
 void test_errdist_uniform()
 {
+  gamma_t gamma = param_gen();
   mpz_t e;
   mpz_init(e);
-  gamma_t gamma = param_gen();
 
   int signs = 0;
   for (size_t i = 0; i < 1e6; i++) {
     errdist_uniform(e, gamma);
-    signs += mpz_sgn(e);
+    mpz_mul_ui(e, e, 2);
+    signs += mpz_cmp(e, gamma.q);
   }
   assert(abs(signs) < 1e4);
   mpz_clear(e);
@@ -170,27 +169,26 @@ void test_errdist_uniform()
 
 void test_smudging()
 {
-  gamma_t gamma = param_gen();
-  sk_t sk;
-  key_gen(sk, gamma);
-
-
-  uint64_t message = 1;
+  setup();
 
   ct_t ct;
-  mpz_t m;
+  mpz_t m, _m;
   ct_init(ct);
-  mpz_init_set_ui(m, message);
+  mpz_inits(m, _m, NULL);
 
-  regev_encrypt(ct, gamma, gamma.rstate, sk, m);
-  ct_smudge(ct, gamma);
+  for (size_t i=0; i<100; i++) {
+    mpz_urandomm(m, gamma.rstate, gamma.p);
 
-  regev_decrypt(m, gamma, sk, ct);
-  assert(!mpz_cmp_ui(m, message));
+    regev_encrypt(ct, gamma, gamma.rstate, sk, m);
+    ct_smudge(ct, gamma);
+
+    regev_decrypt(_m, gamma, sk, ct);
+    assert(!mpz_cmp(m, _m));
+  }
 
   ct_clear(ct);
-  mpz_clear(m);
-  key_clear(sk, gamma);
+  mpz_clears(m, _m, NULL);
+  teardown();
 }
 
 int main()
