@@ -167,11 +167,38 @@ void test_errdist_uniform()
 }
 
 
+
+void test_smudging()
+{
+  gamma_t gamma = param_gen();
+  sk_t sk;
+  key_gen(sk, gamma);
+
+
+  uint64_t message = 1;
+
+  ct_t ct;
+  mpz_t m;
+  ct_init(ct);
+  mpz_init_set_ui(m, message);
+
+  regev_encrypt(ct, gamma, gamma.rstate, sk, m);
+  ct_smudge(ct, gamma);
+
+  regev_decrypt(m, gamma, sk, ct);
+  assert(!mpz_cmp_ui(m, message));
+
+  ct_clear(ct);
+  mpz_clear(m);
+  key_clear(sk, gamma);
+}
+
 int main()
 {
   test_errdist_uniform();
   test_correctness();
   test_import_export();
   test_eval();
+  test_smudging();
   return EXIT_SUCCESS;
 }

@@ -84,13 +84,34 @@ void ct_clear(ct_t ct)
   mpz_clearv(ct, GAMMA_N+1);
 }
 
+static inline void mpz_randomsgn(mpz_t dst, const mpz_t src)
+{
+  uint8_t sign;
+  getrandom(&sign, 1, GRND_NONBLOCK);
+  if (sign & 0x01) {
+    mpz_neg(dst, src);
+  }
+}
+
 void errdist_uniform(mpz_t e, gamma_t gamma)
 {
   mpz_urandomb(e, gamma.rstate, gamma.log_sigma + 4);
 
   const mp_bitcnt_t bit_pos = gamma.log_sigma + 3;
-  if (mpz_tstbit(e, bit_pos)) mpz_mul_si(e, e, -1);
+  mpz_randomsgn(e, e);
   mpz_clrbit(e, bit_pos);
+}
+
+void ct_smudge(ct_t ct, gamma_t gamma) {
+  mpz_t smudging;
+  mpz_init(smudging);
+
+  mpz_urandomb(smudging, gamma.rstate, GAMMA_SMUDGING);
+  mpz_randomsgn(smudging, smudging);
+  mpz_mul(smudging, smudging, gamma.p);
+  mpz_add(ct[GAMMA_N], ct[GAMMA_N], smudging);
+
+  mpz_clear(smudging);
 }
 
 void regev_encrypt1(ct_t c, gamma_t gamma, gmp_randstate_t rs, sk_t sk, mpz_t m, void (*chi)(mpz_t, gamma_t))

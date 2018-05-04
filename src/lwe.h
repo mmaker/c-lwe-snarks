@@ -20,6 +20,7 @@ typedef struct gamma {
 #define GAMMA_LOGQ 736
 #define GAMMA_P 0xfffffffb
 #define GAMMA_D (1 << 15)
+#define GAMMA_SMUDGING 106
 #define LOGQ_BYTES (92)
 #define CT_BYTES (LOGQ_BYTES * (GAMMA_N+1))
 #define CT_BLOCK CT_BYTES //(1 << 18)
@@ -58,6 +59,7 @@ void regev_encrypt(ct_t c, gamma_t gamma, gmp_randstate_t rs, sk_t sk, mpz_t m)
 
 
 void regev_decrypt(mpz_t m, gamma_t gamma, sk_t sk, ct_t ct);
+void ct_smudge(ct_t ct, gamma_t gamma);
 void eval(ct_t rop, gamma_t gamma, uint8_t c8[], mpz_t coeffs[], size_t d);
 void eval_fd(ct_t rop, gamma_t gamma, int cfd, mpz_t coeff[], size_t d);
 
