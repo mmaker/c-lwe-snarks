@@ -22,8 +22,14 @@ typedef struct gamma {
 #define GAMMA_LOG_SMUDGING 106
 #define GAMMA_LOG_SIGMA 650
 #define LOGQ_BYTES (92)
+#define LOGP_BYTES (4)
 #define CT_BYTES (LOGQ_BYTES * (GAMMA_N+1))
+/* CT_BLOCK is the block to be written on disk.
+   Depending on the device it will need to be a power of 2 divisible by sizeof((void *)).
+*/
 #define CT_BLOCK CT_BYTES //(1 << 18)
+
+
 
 gamma_t param_gen();
 gamma_t param_gen_from_seed(rseed_t rseed);

@@ -4,6 +4,9 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
+/* Define to 1 if you have the `flint' library (-lflint). */
+#define HAVE_LIBFLINT 1
+
 /* Define to 1 if you have the `gmp' library (-lgmp). */
 #define HAVE_LIBGMP 1
 
@@ -39,19 +42,19 @@
 #define HAVE_UNISTD_H 1
 
 /* Name of package */
-#define PACKAGE "lwe-snark"
+#define PACKAGE "mangiafuoco"
 
 /* Define to the address where bug reports for this package should be sent. */
 #define PACKAGE_BUGREPORT "michele.orru@ens.fr"
 
 /* Define to the full name of this package. */
-#define PACKAGE_NAME "lwe-snark"
+#define PACKAGE_NAME "mangiafuoco"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "lwe-snark 0.1"
+#define PACKAGE_STRING "mangiafuoco 0.1"
 
 /* Define to the one symbol short name of this package. */
-#define PACKAGE_TARNAME "lwe-snark"
+#define PACKAGE_TARNAME "mangiafuoco"
 
 /* Define to the home page for this package. */
 #define PACKAGE_URL ""

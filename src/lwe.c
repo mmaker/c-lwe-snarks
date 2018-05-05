@@ -29,7 +29,6 @@ gamma_t param_gen_from_seed(rseed_t rseed)
   mpz_init(gamma.p);
   mpz_set_ui(gamma.p, GAMMA_P);
 
-  // mpz_init_set_str
   mpz_init(gamma.q);
   mpz_ui_pow_ui(gamma.q, 2, GAMMA_LOGQ);
 

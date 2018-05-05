@@ -5,27 +5,29 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#include <flint/nmod_poly.h>
+
 #include "ssp.h"
 
-void test_read_write()
+void test_import_export()
 {
-  int fds[2];
-  pipe(fds);
+  nmod_poly_t p, q;
+  nmod_poly_init(p, 0xfffffffb);
+  nmod_poly_init(q, 0xfffffffb);
 
-  if (!fork()) {
-    write_ssp(fds[1]);
-  } else {
-    poly_t pp;
+  nmod_poly_set_coeff_ui(p, 0, 2);
+  nmod_poly_set_coeff_ui(p, 1, 1);
+  nmod_poly_set_coeff_ui(p, 2, 3);
 
-    poly_init(pp);
-    read_polynomial(fds[0], pp, 0);
+  uint64_t buf[3];
+  nmod_poly_export(buf, &p);
+  nmod_poly_import(&p, buf, 2);
 
-    gmp_printf("%Zd\n", pp[0]);
-    mpz_clearv(pp, GAMMA_D);
- }
+  nmod_poly_sub(p, p, q);
+  assert(nmod_poly_degree(q) == -1);
 }
 
 int main()
 {
-  test_read_write();
+  test_import_export();
 }

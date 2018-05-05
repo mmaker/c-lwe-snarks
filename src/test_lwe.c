@@ -96,12 +96,13 @@ void test_eval()
 {
   setup();
   const size_t d = 10;
+  const char * coeffs_filename = "/tmp/coeffs";
 
   for (size_t tries = 0; tries != 10; tries++) {
     mpz_t m[d], coeffs[d];
     ct_t ct;
 
-    int cfd = open("/home/maker/coeffs", O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR);
+    int cfd = open(coeffs_filename, O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR);
     fail_if_error();
     uint8_t buf[d * CT_BLOCK];
 
@@ -121,7 +122,7 @@ void test_eval()
     ct_t evaluated;
     ct_init(evaluated);
 
-    cfd = open("/home/maker/coeffs", O_RDONLY | O_LARGEFILE);
+    cfd = open(coeffs_filename, O_RDONLY | O_LARGEFILE);
     fail_if_error();
     eval_fd(evaluated, gamma, cfd, coeffs, d);
     close(cfd);

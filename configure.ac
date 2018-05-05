@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.65])
-AC_INIT([lwe-snark], [0.1], [michele.orru@ens.fr])
+AC_INIT([mangiafuoco], [0.1], [michele.orru@ens.fr])
 
 
 AC_CONFIG_SRCDIR([src/lwe.c])
@@ -10,7 +10,7 @@ AC_CONFIG_HEADERS([src/config.h])
 
 # Checks for programs.
 
-AC_CHECK_TARGET_TOOL([latexmk], [latexmk], [no])
+#AC_CHECK_TARGET_TOOL([latexmk], [latexmk], [no])
 #AS_IF([test "x$latexmk" = "xno"], [AC_MSG_ERROR([cannot find pdflatex.])])
 AC_PROG_CC([gcc clang cc])
 AC_PROG_CC_C99
@@ -19,6 +19,8 @@ AC_PROG_RANLIB
 # Checks for libraries.
 AC_CHECK_LIB(gmp, __gmpz_init, ,
              [AC_MSG_ERROR([GNU MP not found, see https://gmplib.org/])])
+AC_CHECK_LIB(flint, nmod_poly_init, ,
+             [AC_MSG_ERROR([FLINT not found, see https://www.flintlib.org/])])
 
 # have _GNU_SOURCE defined aroud.
 AC_GNU_SOURCE
