@@ -51,6 +51,13 @@ void ct_import(ct_t ct, uint8_t *buf);
 void decompress_encryption(ct_t c, gamma_t gamma, gmp_randstate_t rs, mpz_t b);
 void regev_encrypt1(ct_t c, gamma_t gamma, gmp_randstate_t rs, sk_t sk, mpz_t m, void (*chi)(mpz_t, gamma_t));
 
+void mpz_add_dotp(mpz_t rop, mpz_t modulus, mpz_t a[], mpz_t b[], size_t len);
+
+static inline void mpz_dotp(mpz_t rop, mpz_t modulus, mpz_t a[], mpz_t b[], size_t len) {
+  mpz_set_ui(rop, 0);
+  mpz_add_dotp(rop, modulus, a, b, len);
+}
+
 static inline
 void regev_encrypt(ct_t c, gamma_t gamma, gmp_randstate_t rs, sk_t sk, mpz_t m)
 {

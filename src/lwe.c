@@ -12,10 +12,11 @@
 
 #include "lwe.h"
 
-
-void dot_product(mpz_t rop, mpz_t modulus, mpz_t a[], mpz_t b[], size_t len)
+void mpz_add_dotp(mpz_t rop,
+                  mpz_t modulus,
+                  mpz_t a[], mpz_t b[],
+                  size_t len)
 {
-  mpz_set_ui(rop, 0);
   for (size_t i = 0; i < len; i++) {
     mpz_addmul(rop, a[i], b[i]);
   }
@@ -94,8 +95,7 @@ static inline void mpz_randomsgn(mpz_t dst, gamma_t gamma, const mpz_t src)
 
 void errdist_uniform(mpz_t e, gamma_t gamma)
 {
-  mpz_urandomb(e, gamma.rstate, GAMMA_LOG_SIGMA + 3);
-  mpz_randomsgn(e, gamma, e);
+  mpz_urandomb(e, gamma.rstate, GAMMA_LOG_SIGMA+3);
 }
 
 void ct_smudge(ct_t ct, gamma_t gamma) {
@@ -103,8 +103,9 @@ void ct_smudge(ct_t ct, gamma_t gamma) {
   mpz_init(smudging);
 
   mpz_urandomb(smudging, gamma.rstate, GAMMA_LOG_SMUDGING);
-  mpz_randomsgn(smudging, gamma, smudging);
   mpz_mul(smudging, smudging, gamma.p);
+  mpz_randomsgn(smudging, gamma, smudging);
+
   mpz_add(ct[GAMMA_N], ct[GAMMA_N], smudging);
   mpz_mod(ct[GAMMA_N], ct[GAMMA_N], gamma.q);
 
@@ -119,13 +120,13 @@ void regev_encrypt1(ct_t c, gamma_t gamma, gmp_randstate_t rs, sk_t sk, mpz_t m,
   mpz_t e;
   mpz_init(e);
   (*chi)(e, gamma);
-
   mpz_mul(c[GAMMA_N], e, gamma.p);
+  mpz_randomsgn(e, gamma, e);
 
   // sample a
   mpz_urandommv(c, rs, gamma.q, GAMMA_N);
 
-  dot_product(c[GAMMA_N], gamma.q, sk, c, GAMMA_N);
+  mpz_add_dotp(c[GAMMA_N], gamma.q, sk, c, GAMMA_N);
   mpz_add(c[GAMMA_N], c[GAMMA_N], m);
   mpz_mod(c[GAMMA_N], c[GAMMA_N], gamma.q);
 
@@ -140,8 +141,9 @@ void decompress_encryption(ct_t c, gamma_t gamma, gmp_randstate_t rs, mpz_t b)
 
 void regev_decrypt(mpz_t m, gamma_t gamma, sk_t sk, ct_t ct)
 {
-  dot_product(m, gamma.q, ct, sk, GAMMA_N);
-  mpz_sub(m, ct[GAMMA_N], m);
+  mpz_dotp(m, gamma.q, ct, sk, GAMMA_N);
+  mpz_neg(m, m);
+  mpz_add(m, ct[GAMMA_N], m);
   mpz_mod(m, m, gamma.q);
   mpz_mod(m, m, gamma.p);
 }

@@ -17,7 +17,6 @@
 
 
 #define COEFFS_FILENAME "/home/maker/coeffs"
-void dot_product(mpz_t rop, mpz_t modulus, mpz_t a[], mpz_t b[], size_t len);
 
 #define fail_if_error() do {                    \
     if (errno > 0) {                            \
@@ -73,7 +72,7 @@ void benchmark_eval()
 
   mpz_t correct;
   mpz_init(correct);
-  dot_product(correct, gamma.p, m, coeffs, GAMMA_D);
+  mpz_dotp(correct, gamma.p, m, coeffs, GAMMA_D);
   assert(!mpz_cmp(got, correct));
 
   mpz_clears(got, correct, NULL);
