@@ -169,8 +169,10 @@ void ct_import(ct_t ct, uint8_t *buf)
 /**
  * Compute the scalar product of a ciphertext (mod q) times a plaintext (mod p).
  */
-void ct_mul_scalar(ct_t rop, gamma_t gamma, ct_t a, mpz_t b)
+void ct_mul(ct_t rop, gamma_t gamma, ct_t a, mpz_t b)
 {
+  assert(mpz_cmp(b, gamma.p) < 0);
+
   for (size_t i = 0; i != GAMMA_N+1; i++) {
     mpz_mul(rop[i], a[i], b);
     mpz_mod(rop[i], rop[i], gamma.q);
@@ -192,7 +194,7 @@ void eval(ct_t rop, gamma_t gamma, uint8_t c8[], mpz_t coeff[], size_t d)
 
   for (size_t i = 0; i != d; i++) {
     ct_import(ct, &c8[i * CT_BYTES]);
-    ct_mul_scalar(ct, gamma, ct, coeff[i]);
+    ct_mul(ct, gamma, ct, coeff[i]);
     ct_add(rop, gamma, rop, ct);
   }
   ct_clear(ct);
@@ -218,7 +220,7 @@ void eval_fd(ct_t rop, gamma_t gamma, int cfd, mpz_t coeff[], size_t d)
 
   for (size_t i = 0; i != d; i++) {
     ct_import(ct, &c8[i * CT_BLOCK]);
-    ct_mul_scalar(ct, gamma, ct, coeff[i]);
+    ct_mul(ct, gamma, ct, coeff[i]);
     ct_add(rop, gamma, rop, ct);
   }
 

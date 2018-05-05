@@ -147,24 +147,6 @@ void test_eval()
 }
 
 
-void test_errdist_uniform()
-{
-  gamma_t gamma = param_gen();
-  mpz_t e;
-  mpz_init(e);
-
-  int signs = 0;
-  for (size_t i = 0; i < 1e6; i++) {
-    errdist_uniform(e, gamma);
-    mpz_mul_ui(e, e, 2);
-    signs += mpz_cmp(e, gamma.q);
-  }
-  //assert(abs(signs) < 1e4);
-  mpz_clear(e);
-  param_clear(&gamma);
-}
-
-
 
 void test_smudging()
 {
@@ -192,7 +174,6 @@ void test_smudging()
 
 int main()
 {
-  test_errdist_uniform();
   test_correctness();
   test_import_export();
   test_eval();
