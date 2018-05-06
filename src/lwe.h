@@ -1,6 +1,10 @@
 #pragma once
 #include <stdint.h>
+#include <sys/random.h>
+
+#include <flint/nmod_poly.h>
 #include <gmp.h>
+
 
 /* Parameter generation */
 
@@ -21,6 +25,7 @@ typedef struct gamma {
 #define GAMMA_D (1 << 10)
 /* must be divisible by 8 */
 #define GAMMA_M (128)
+#define GAMMA_LU 10
 #define GAMMA_LOG_SMUDGING 106
 #define GAMMA_LOG_SIGMA 650
 #define LOGQ_BYTES (92)
@@ -75,8 +80,8 @@ void regev_encrypt(ct_t c, gamma_t gamma, gmp_randstate_t rs, sk_t sk, mpz_t m)
 
 void regev_decrypt(mpz_t m, gamma_t gamma, sk_t sk, ct_t ct);
 void ct_smudge(ct_t ct, gamma_t gamma);
-void eval(ct_t rop, gamma_t gamma, uint8_t c8[], mpz_t coeffs[], size_t d);
 void eval_fd(ct_t rop, gamma_t gamma, int cfd, mpz_t coeff[], size_t d);
+void eval_poly(ct_t rop, gamma_t gamma, uint8_t *c8, nmod_poly_t coeffs, size_t d);
 
 #define ct_clearv(vs, len) do {                     \
     for (size_t i = 0; i < len; i++) {              \
@@ -103,3 +108,11 @@ void eval_fd(ct_t rop, gamma_t gamma, int cfd, mpz_t coeff[], size_t d);
       mpz_urandomm(vs[i], rstate, mod);                 \
     }                                                   \
 } while (0)
+
+
+static inline uint64_t rand_modp()
+{
+  uint64_t rop;
+  getrandom(&rop, sizeof(rop), GRND_NONBLOCK);
+  return rop % GAMMA_P;
+}

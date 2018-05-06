@@ -1,123 +1,162 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/types.h>
 #include <sys/random.h>
 
+#include <flint/nmod_poly.h>
+
 #include "lwe.h"
-#include "snark.h"
 #include "ssp.h"
+#include "snark.h"
 
 
-void crs_gen(crs_t crs, vk_t vk, gamma_t gamma, int ssp_fd) {
-  mpz_t alpha, beta, s, s_i, t_i, alpha_s_i;
-  mpz_inits(alpha, beta, s, s_i, t_i, alpha_s_i, NULL);
-  ctx_t ct;
-  ct_init(ct, gamma);
+#define s_offset(i) (i * CT_BYTES)
+#define as_offset(i)  ((CT_BYTES * GAMMA_D) + (i * CT_BYTES))
+#define v_offset(i) ((2)*(CT_BYTES * GAMMA_D) + i * CT_BYTES)
 
-  mpz_urandomm(s, gamma.rstate, gamma.p);
-  mpz_urandomm(alpha, gamma.rstate, gamma.p);
-  mpz_urandomm(beta, gamma.rstate, gamma.p);
+void setup(uint8_t *crs, vrs_t vrs, int ssp_fd, gamma_t gamma)
+{
+  vrs->alpha = rand_modp();
+  vrs->beta = rand_modp();
+  vrs->s = rand_modp();
+  key_gen(vrs->sk, gamma);
 
-  // XXX some of these can be removed.
-  key_gen(vk->sk, gamma);
-  mpz_inits(vk->s, vk->alpha, vk->beta, NULL);
-  mpz_set(vk->s, s);
-  mpz_set(vk->alpha, alpha);
-  mpz_set(vk->beta, beta);
+  ct_t ct;
+  ct_init(ct);
 
-  // create a new PRG that will be used to reproduce encryptions
-  gmp_randstate_t rs;
-  gmp_randinit_default(rs);
-  rseed_t rseed;
-  getrandom(&rseed, sizeof(rseed_t), GRND_NONBLOCK);
-  mpz_t mpz_rseed;
-  mpz_init(mpz_rseed);
-  mpz_import(mpz_rseed, 32, 1, sizeof(rseed[0]), 0, 0, rseed);
-  gmp_randseed(rs, mpz_rseed);
-  mpz_clear(mpz_rseed);
+  mpz_t current;
+  mpz_init(current);
+  uint64_t s_i = 1;
+  uint64_t as_i = vrs->alpha;
 
-  /* α s^0 */
-  mpz_set_ui(s_i, 1);
-  mpz_mul_mod(alpha_s_i, s_i, alpha, gamma.p);
-  mpz_init(crs->alpha_s[0]);
-  encrypt(ct, gamma, rs, vk->sk, alpha_s_i);
-  mpz_set(crs->alpha_s[0], ct->b);
+  for (size_t i = 0; i <= GAMMA_D; i++) {
+    mpz_set_ui(current, s_i);
+    regev_encrypt(ct, gamma, gamma.rstate, vrs->sk, current);
+    ct_export(crs + s_offset(i), ct);
 
-  /* initialize β t (s) */
-  poly_t tt;
-  mpz_initv(tt, GAMMA_D + 1);
-  read_polynomial(ssp_fd, tt, 0);
-  mpz_init_set(crs->beta_t, tt[0]);
-  for (size_t i = 0; i < gamma.d; i++) {
-    /* s^i  */
-    mpz_init(crs->s[i]);
-    mpz_mul_mod(s_i, s_i, s, gamma.p);
-    encrypt(ct, gamma, rs, vk->sk, s_i);
-    mpz_set(crs->s[i], ct->b);
+    mpz_set_ui(current, as_i);
+    regev_encrypt(ct, gamma, gamma.rstate, vrs->sk, current);
+    ct_export(crs + as_offset(i), ct);
 
-    /* α s^i */
-    mpz_init(crs->alpha_s[i+1]);
-    mpz_mul_mod(alpha_s_i, s_i, alpha, gamma.p);
-    // XXX: change the error
-    encrypt(ct, gamma, rs, vk->sk, alpha_s_i);
-    mpz_set(crs->alpha_s[i+1], ct->b);
-
-    /* β t(s) - generate t(s) */
-    mpz_addmul(crs->beta_t, tt[i+1], s_i);
+    s_i = (s_i * vrs->s) % GAMMA_P;
+    as_i = (as_i * vrs->s) % GAMMA_P;
   }
 
-  /* β t(s) */
-  mpz_mul_mod(crs->beta_t, crs->beta_t, beta, gamma.p);
+  uint8_t buf[8 * GAMMA_D];
+  const size_t buflen = sizeof(buf);
+  nmod_poly_t v_i;
+  nmod_poly_init(v_i, GAMMA_P);
+  for (size_t i = 0; i <= GAMMA_M+2; i++) {
+    read(ssp_fd, buf, buflen);
+    nmod_poly_import(&v_i, buf, GAMMA_D);
+    uint64_t v_i_bs = (nmod_poly_evaluate_nmod(v_i, vrs->s) * vrs->beta) % GAMMA_P;
+    mpz_set_ui(current, v_i_bs);
+    regev_encrypt(ct, gamma, gamma.rstate, vrs->sk, current);
+    ct_export(crs + v_offset(i), ct);
+  }
 
-  memmove(crs->rseed, rseed, sizeof(rseed_t));
-
-  mpz_clears(alpha, beta, s, s_i, alpha_s_i, NULL);
-  ct_clear(ct, gamma);
+  mpz_clear(current);
 }
 
+void prover(proof_t pi, uint8_t *crs, int ssp_fd, mpz_t witness, gamma_t gamma)
+{
+  nmod_poly_t t;
+  nmod_poly_init(t, GAMMA_P);
+  nmod_poly_t v_i;
+  nmod_poly_init(v_i, GAMMA_P);
+  nmod_poly_t v;
+  nmod_poly_init(v, GAMMA_P);
+  nmod_poly_t h;
+  nmod_poly_init(h, GAMMA_P);
 
-void prover(proof_t proof, crs_t crs, mpz_t witness[]);
-bool verifier(gamma_t gamma, int ssp_fd, vk_t vk, proof_t proof) {
+  uint8_t buf[8 * GAMMA_D];
+  const size_t buflen = sizeof(buf);
+
+  nmod_poly_t one;
+  nmod_poly_init(one, GAMMA_P);
+  nmod_poly_set_coeff_ui(one, 0, 1);
+
+  // read t(x)
+  read(ssp_fd, buf, buflen);
+  nmod_poly_import(&t, buf, GAMMA_D);
+
+  uint64_t delta = rand_modp();
+  nmod_poly_set(v, t);
+  nmod_poly_scalar_mul_nmod(v, v, delta);
+
+  // assume l_u = 0
+  read(ssp_fd, buf, buflen);
+  nmod_poly_import(&v_i, buf, GAMMA_D);
+  nmod_poly_add(v, v, v_i);
+
+  for (size_t i = 0; i < GAMMA_M; i++) {
+    read(ssp_fd, buf, buflen);
+    if (mpz_tstbit(witness, i)) {
+      nmod_poly_import(&v_i, buf, GAMMA_D);
+      nmod_poly_add(v, v, v_i);
+    }
+  }
+
+  nmod_poly_set(h, v);
+  nmod_poly_pow(h, h, 2);
+  nmod_poly_sub(h, h, one);
+  nmod_poly_div(h, h, t);
+
+  eval_poly(pi->h, gamma, crs+s_offset(0), h, GAMMA_D);
+  eval_poly(pi->hat_h, gamma, crs+as_offset(0), h, GAMMA_D);
+  eval_poly(pi->hat_v, gamma, crs+as_offset(0), v, GAMMA_D);
+
+  nmod_poly_clear(h);
+  nmod_poly_clear(v_i);
+  nmod_poly_clear(v);
+  nmod_poly_clear(h);
+}
+
+bool verifier(gamma_t gamma, int ssp_fd, vrs_t vrs, proof_t pi) {
   bool result = false;
   mpz_t h_s, hath_s, hatv_s, w_s, b_s, t_s, v_s;
   mpz_t test;
   mpz_inits(h_s, hath_s, hatv_s, w_s, b_s, t_s, v_s, NULL);
   mpz_init(test);
 
-  poly_t pp;
+  uint8_t buf[8 * GAMMA_D];
+  const size_t buflen = sizeof(buf);
+
+  nmod_poly_t pp;
+  nmod_poly_init(pp, GAMMA_P);
   /* t_s */
-  poly_init(pp);
-  read_polynomial(ssp_fd, pp, T);
-  evaluate_polynomial(t_s, pp, vk->s, gamma.p);
+  read(ssp_fd, buf, buflen);
+  nmod_poly_import(&pp, buf, GAMMA_D);
+  mpz_set_ui(t_s, nmod_poly_evaluate_nmod(pp, vrs->s));
 
-  /* v_s */
-  read_polynomial(ssp_fd, pp, V(0));
-  // XXX this is not correct
-  evaluate_polynomial(v_s, pp, vk->s, gamma.p);
-  mpz_add(v_s, v_s, w_s);
-
-  poly_clear(pp);
+  /* v_s is just v0*/
+  read(ssp_fd, buf, buflen);
+  nmod_poly_import(&pp, buf, GAMMA_D);
+  mpz_set_ui(v_s, nmod_poly_evaluate_nmod(pp, vrs->s));
 
   /* decrypt the proof */
-  decrypt(h_s, gamma, vk->sk, &proof[0]);
-  decrypt(hath_s, gamma, vk->sk, &proof[1]);
-  decrypt(hatv_s, gamma, vk->sk, &proof[2]);
-  decrypt(w_s, gamma, vk->sk, &proof[3]);
-  decrypt(b_s, gamma, vk->sk, &proof[4]);
+  regev_decrypt(h_s, gamma, vrs->sk, pi->h);
+  regev_decrypt(hath_s, gamma, vrs->sk, pi->hat_h);
+  regev_decrypt(hatv_s, gamma, vrs->sk, pi->hat_v);
+  regev_decrypt(w_s, gamma, vrs->sk, pi->v_w);
+  regev_decrypt(b_s, gamma, vrs->sk, pi->b_w);
 
   /*  eq-pke  */
-  mpz_mul(test, vk->alpha, h_s);
+  mpz_mul_ui(test, h_s, vrs->alpha);
   mpz_sub(test, test, hath_s);
   mpz_mod(test, test, gamma.p);
   if (mpz_sgn(test)) goto end;
 
-  mpz_mul(test, vk->alpha, v_s);
+  mpz_mul_ui(test, v_s, vrs->alpha);
   mpz_sub(test, test, hatv_s);
   mpz_mod(test, test, gamma.p);
   if (mpz_sgn(test)) goto end;
 
   /* eq-lin */
-  mpz_mul(test, vk->beta, w_s);
+  mpz_mul_ui(test, w_s, vrs->beta);
   mpz_sub(test, test, b_s);
   mpz_mod(test, test, gamma.p);
   if (mpz_sgn(test)) goto end;
@@ -135,17 +174,4 @@ bool verifier(gamma_t gamma, int ssp_fd, vk_t vk, proof_t proof) {
   mpz_clears(h_s, hath_s, hatv_s, w_s, b_s, t_s, v_s, NULL);
   mpz_clear(test);
   return result;
-}
-
-void vk_clear(vk_t vk, gamma_t gamma)
-{
-  mpz_clear(vk->s);
-  mpz_clear(vk->alpha);
-  key_clear(vk->sk, gamma);
-}
-
-void crs_clear(crs_t crs, gamma_t gamma)
-{
-  mpz_clearv(crs->s, gamma.d);
-  mpz_clearv(crs->alpha_s, gamma.d + 1);
 }

@@ -92,6 +92,8 @@ void test_correctness()
   }                                             \
   } while(0)
 
+#include <flint/nmod_poly.h>
+
 void test_eval()
 {
   setup();
@@ -99,8 +101,12 @@ void test_eval()
   const char * coeffs_filename = "/tmp/coeffs";
 
   for (size_t tries = 0; tries != 10; tries++) {
-    mpz_t m[d], coeffs[d];
+    mpz_t m[d];
+
+    nmod_poly_t coeffs;
+    nmod_poly_init(coeffs, GAMMA_P);
     ct_t ct;
+    ct_init(ct);
 
     int cfd = open(coeffs_filename, O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR);
     fail_if_error();
@@ -108,10 +114,8 @@ void test_eval()
 
     for(size_t i = 0; i != d; i++) {
       mpz_init(m[i]);
-      mpz_init(coeffs[i]);
-      ct_init(ct);
       mpz_urandomm(m[i], gamma.rstate, gamma.p);
-      mpz_urandomm(coeffs[i], gamma.rstate, gamma.p);
+      nmod_poly_set_coeff_ui(coeffs, i, rand_modp());
       regev_encrypt(ct, gamma, gamma.rstate, sk, m[i]);
       ct_export(&buf[i * CT_BLOCK], ct);
     }
@@ -124,7 +128,7 @@ void test_eval()
 
     cfd = open(coeffs_filename, O_RDONLY | O_LARGEFILE);
     fail_if_error();
-    eval_fd(evaluated, gamma, cfd, coeffs, d);
+    eval_poly(evaluated, gamma, cfd, coeffs, d);
     close(cfd);
     fail_if_error();
 
@@ -133,15 +137,18 @@ void test_eval()
     regev_decrypt(got, gamma, sk, evaluated);
 
     mpz_t correct;
-    mpz_init(correct);
-    mpz_dotp(correct, gamma.p, m, coeffs, d);
+    mpz_init_set_ui(correct, 0);
+    for (size_t i =0 ; i < d; i++) {
+      mpz_addmul_ui(correct, m[i], nmod_poly_get_coeff_ui(coeffs, i));
+    }
+    mpz_mod(correct, correct, gamma.p);
     assert(!mpz_cmp(got, correct));
 
     mpz_clears(got, correct, NULL);
     mpz_clearv(m, d);
-    mpz_clearv(coeffs, d);
     ct_clear(evaluated);
     ct_clear(ct);
+    nmod_poly_clear(coeffs);
   }
 
   teardown();

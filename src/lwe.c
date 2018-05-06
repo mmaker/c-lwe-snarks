@@ -178,25 +178,22 @@ void ct_mul(ct_t rop, gamma_t gamma, ct_t a, mpz_t b)
   }
 }
 
+void ct_mul_ui(ct_t rop, gamma_t gamma, ct_t a, uint64_t b)
+{
+  assert(mpz_cmp_ui(gamma.p, b) > 0);
+
+  for (size_t i = 0; i != GAMMA_N+1; i++) {
+    mpz_mul_ui(rop[i], a[i], b);
+    mpz_mod(rop[i], rop[i], gamma.q);
+  }
+}
+
 void ct_add(ct_t rop, gamma_t gamma, ct_t a, ct_t b)
 {
   for (size_t i = 0; i != GAMMA_N+1; i++) {
     mpz_add(rop[i], a[i], b[i]);
     mpz_mod(rop[i], rop[i], gamma.q);
   }
-}
-
-void eval(ct_t rop, gamma_t gamma, uint8_t c8[], mpz_t coeff[], size_t d)
-{
-  ct_t ct;
-  ct_init(ct);
-
-  for (size_t i = 0; i != d; i++) {
-    ct_import(ct, &c8[i * CT_BYTES]);
-    ct_mul(ct, gamma, ct, coeff[i]);
-    ct_add(rop, gamma, rop, ct);
-  }
-  ct_clear(ct);
 }
 
 
@@ -224,5 +221,21 @@ void eval_fd(ct_t rop, gamma_t gamma, int cfd, mpz_t coeff[], size_t d)
   }
 
   munmap(c8, length);
+  ct_clear(ct);
+}
+
+
+#include <flint/nmod_poly.h>
+void eval_poly(ct_t rop, gamma_t gamma, uint8_t *c8, nmod_poly_t p, size_t d)
+{
+  ct_t ct;
+  ct_init(ct);
+
+  for (size_t i = 0; i != d; i++) {
+    ct_import(ct, &c8[i * CT_BLOCK]);
+    ct_mul_ui(ct, gamma, ct, nmod_poly_get_coeff_ui(p, i));
+    ct_add(rop, gamma, rop, ct);
+  }
+
   ct_clear(ct);
 }

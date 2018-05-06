@@ -35,6 +35,7 @@ void benchmark_eval()
   INIT_TIMEIT();
   mpz_t m[GAMMA_D], coeffs[GAMMA_D];
   ct_t ct;
+  ct_init(ct);
 
   int cfd = open(COEFFS_FILENAME, O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR);
   fail_if_error();
@@ -43,7 +44,6 @@ void benchmark_eval()
   for (size_t i = 0; i != GAMMA_D; i++) {
     mpz_init(m[i]);
     mpz_init(coeffs[i]);
-    ct_init(ct);
     mpz_urandomm(m[i], gamma.rstate, gamma.p);
     mpz_urandomm(coeffs[i], gamma.rstate, gamma.p);
     regev_encrypt(ct, gamma, gamma.rstate, sk, m[i]);
