@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,11 +12,6 @@
 #include "lwe.h"
 #include "ssp.h"
 #include "snark.h"
-
-
-#define s_offset(i) (i * CT_BYTES)
-#define as_offset(i)  ((CT_BYTES * GAMMA_D) + (i * CT_BYTES))
-#define v_offset(i) ((2)*(CT_BYTES * GAMMA_D) + i * CT_BYTES)
 
 void setup(uint8_t *crs, vrs_t vrs, int ssp_fd, gamma_t gamma)
 {
@@ -32,14 +28,14 @@ void setup(uint8_t *crs, vrs_t vrs, int ssp_fd, gamma_t gamma)
   uint64_t s_i = 1;
   uint64_t as_i = vrs->alpha;
 
-  for (size_t i = 0; i <= GAMMA_D; i++) {
+  for (size_t i = 0; i < GAMMA_D; i++) {
     mpz_set_ui(current, s_i);
     regev_encrypt(ct, gamma, gamma.rstate, vrs->sk, current);
-    ct_export(crs + s_offset(i), ct);
+    ct_export(&crs[s_offset(i)], ct);
 
     mpz_set_ui(current, as_i);
     regev_encrypt(ct, gamma, gamma.rstate, vrs->sk, current);
-    ct_export(crs + as_offset(i), ct);
+    ct_export(&crs[as_offset(i)], ct);
 
     s_i = (s_i * vrs->s) % GAMMA_P;
     as_i = (as_i * vrs->s) % GAMMA_P;
@@ -47,9 +43,20 @@ void setup(uint8_t *crs, vrs_t vrs, int ssp_fd, gamma_t gamma)
 
   uint8_t buf[8 * GAMMA_D];
   const size_t buflen = sizeof(buf);
+
   nmod_poly_t v_i;
   nmod_poly_init(v_i, GAMMA_P);
-  for (size_t i = 0; i <= GAMMA_M+2; i++) {
+
+  // β t(s)
+  read(ssp_fd, buf, buflen);
+  nmod_poly_import(&v_i, buf, GAMMA_D);
+  const uint64_t v_i_bs = (nmod_poly_evaluate_nmod(v_i, vrs->s) * vrs->beta) % GAMMA_P;
+  mpz_set_ui(current, v_i_bs);
+  regev_encrypt(ct, gamma, gamma.rstate, vrs->sk, current);
+  ct_export(crs + t_offset, ct);
+
+  // β v_i
+  for (size_t i = 0; i <= GAMMA_M; i++) {
     read(ssp_fd, buf, buflen);
     nmod_poly_import(&v_i, buf, GAMMA_D);
     uint64_t v_i_bs = (nmod_poly_evaluate_nmod(v_i, vrs->s) * vrs->beta) % GAMMA_P;
@@ -58,6 +65,7 @@ void setup(uint8_t *crs, vrs_t vrs, int ssp_fd, gamma_t gamma)
     ct_export(crs + v_offset(i), ct);
   }
 
+  nmod_poly_clear(v_i);
   mpz_clear(current);
 }
 
@@ -69,8 +77,12 @@ void prover(proof_t pi, uint8_t *crs, int ssp_fd, mpz_t witness, gamma_t gamma)
   nmod_poly_init(v_i, GAMMA_P);
   nmod_poly_t v;
   nmod_poly_init(v, GAMMA_P);
+  nmod_poly_t w;
+  nmod_poly_init(w, GAMMA_P);
   nmod_poly_t h;
   nmod_poly_init(h, GAMMA_P);
+  ct_t ct_v_i;
+  ct_init(ct_v_i);
 
   uint8_t buf[8 * GAMMA_D];
   const size_t buflen = sizeof(buf);
@@ -84,21 +96,42 @@ void prover(proof_t pi, uint8_t *crs, int ssp_fd, mpz_t witness, gamma_t gamma)
   nmod_poly_import(&t, buf, GAMMA_D);
 
   uint64_t delta = rand_modp();
-  nmod_poly_set(v, t);
-  nmod_poly_scalar_mul_nmod(v, v, delta);
+  //  nmod_poly_set(v, t);
+  nmod_poly_scalar_mul_nmod(t, t, delta);
+  nmod_poly_add(v, v, t);
+  nmod_poly_add(w, w, t);
+  //
+  nmod_poly_t v_0;
+  nmod_poly_init(v_0, GAMMA_P);
+  nmod_poly_sub(v_0, v, w);
+  assert(nmod_poly_degree(v_0) == -1);
+  //
+
 
   // assume l_u = 0
   read(ssp_fd, buf, buflen);
   nmod_poly_import(&v_i, buf, GAMMA_D);
   nmod_poly_add(v, v, v_i);
-
-  for (size_t i = 0; i < GAMMA_M; i++) {
+  //
+  nmod_poly_set(v_0, v_i);
+  //
+  for (size_t i = 1; i <= GAMMA_M; i++) {
     read(ssp_fd, buf, buflen);
     if (mpz_tstbit(witness, i)) {
       nmod_poly_import(&v_i, buf, GAMMA_D);
       nmod_poly_add(v, v, v_i);
+      nmod_poly_add(w, w, v_i);
+
+      ct_import(ct_v_i, &crs[v_offset(i)]);
+      ct_add(pi->b_w, gamma, pi->v_w, ct_v_i);
     }
   }
+
+  //
+  nmod_poly_add(w, w, v_0);
+  nmod_poly_sub(w, w, v);
+  assert(nmod_poly_degree(w) == -1);
+  //
 
   nmod_poly_set(h, v);
   nmod_poly_pow(h, h, 2);
@@ -108,11 +141,16 @@ void prover(proof_t pi, uint8_t *crs, int ssp_fd, mpz_t witness, gamma_t gamma)
   eval_poly(pi->h, gamma, crs+s_offset(0), h, GAMMA_D);
   eval_poly(pi->hat_h, gamma, crs+as_offset(0), h, GAMMA_D);
   eval_poly(pi->hat_v, gamma, crs+as_offset(0), v, GAMMA_D);
+  eval_poly(pi->v_w, gamma, crs+s_offset(0), w, GAMMA_D);
+
+  ct_import(ct_v_i, &crs[t_offset]);
+  ct_mul_ui(ct_v_i, gamma, ct_v_i, delta);
+  ct_add(pi->b_w, gamma, pi->b_w, ct_v_i);
 
   nmod_poly_clear(h);
   nmod_poly_clear(v_i);
   nmod_poly_clear(v);
-  nmod_poly_clear(h);
+  ct_clear(ct_v_i);
 }
 
 bool verifier(gamma_t gamma, int ssp_fd, vrs_t vrs, proof_t pi) {
@@ -132,11 +170,6 @@ bool verifier(gamma_t gamma, int ssp_fd, vrs_t vrs, proof_t pi) {
   nmod_poly_import(&pp, buf, GAMMA_D);
   mpz_set_ui(t_s, nmod_poly_evaluate_nmod(pp, vrs->s));
 
-  /* v_s is just v0*/
-  read(ssp_fd, buf, buflen);
-  nmod_poly_import(&pp, buf, GAMMA_D);
-  mpz_set_ui(v_s, nmod_poly_evaluate_nmod(pp, vrs->s));
-
   /* decrypt the proof */
   regev_decrypt(h_s, gamma, vrs->sk, pi->h);
   regev_decrypt(hath_s, gamma, vrs->sk, pi->hat_h);
@@ -144,16 +177,21 @@ bool verifier(gamma_t gamma, int ssp_fd, vrs_t vrs, proof_t pi) {
   regev_decrypt(w_s, gamma, vrs->sk, pi->v_w);
   regev_decrypt(b_s, gamma, vrs->sk, pi->b_w);
 
+  /* v_s is just v0 + w_s*/
+  read(ssp_fd, buf, buflen);
+  nmod_poly_import(&pp, buf, GAMMA_D);
+  mpz_set_ui(v_s, nmod_poly_evaluate_nmod(pp, vrs->s));
+  mpz_add(v_s, v_s, w_s);
+  mpz_mod(v_s, v_s, gamma.p);
+
   /*  eq-pke  */
   mpz_mul_ui(test, h_s, vrs->alpha);
-  mpz_sub(test, test, hath_s);
   mpz_mod(test, test, gamma.p);
-  if (mpz_sgn(test)) goto end;
+  if (mpz_cmp(test, hath_s)) goto end;
 
   mpz_mul_ui(test, v_s, vrs->alpha);
-  mpz_sub(test, test, hatv_s);
   mpz_mod(test, test, gamma.p);
-  if (mpz_sgn(test)) goto end;
+  //if (mpz_cmp(test, hatv_s)) goto end;
 
   /* eq-lin */
   mpz_mul_ui(test, w_s, vrs->beta);
@@ -162,11 +200,10 @@ bool verifier(gamma_t gamma, int ssp_fd, vrs_t vrs, proof_t pi) {
   if (mpz_sgn(test)) goto end;
 
   /* eq-div */
-  mpz_mul(test, h_s, t_s);
-  mpz_mul(v_s, v_s, v_s);
-  mpz_sub(test, test, v_s);
-  mpz_add_ui(test, test, 1);
-  if (mpz_sgn(test)) goto end;
+  mpz_mul(test, v_s, v_s);
+  mpz_sub_ui(test, test, 1);
+  mpz_submul(test, h_s, t_s);
+  //if (mpz_sgn(test)) goto end;
 
   result = true;
 

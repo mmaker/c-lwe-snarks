@@ -97,7 +97,7 @@ void test_correctness()
 void test_eval()
 {
   setup();
-  const size_t d = 10;
+  const size_t d = 50;
   const char * coeffs_filename = "/tmp/coeffs";
 
   for (size_t tries = 0; tries != 10; tries++) {
@@ -127,8 +127,12 @@ void test_eval()
     ct_init(evaluated);
 
     cfd = open(coeffs_filename, O_RDONLY | O_LARGEFILE);
+    const size_t length = d * CT_BLOCK;
+    uint8_t *c8 = mmap(NULL, length, PROT_READ, MAP_PRIVATE, cfd, 0);
+    madvise(c8, length, MADV_SEQUENTIAL);
     fail_if_error();
-    eval_poly(evaluated, gamma, cfd, coeffs, d);
+    eval_poly(evaluated, gamma, c8, coeffs, d);
+    munmap(c8, length);
     close(cfd);
     fail_if_error();
 

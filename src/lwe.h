@@ -22,14 +22,14 @@ typedef struct gamma {
 #define GAMMA_N 1470
 #define GAMMA_LOGQ 736
 #define GAMMA_P 0xfffffffb
-#define GAMMA_D (1 << 10)
+#define GAMMA_D (1UL << 8)
 /* must be divisible by 8 */
 #define GAMMA_M (128)
 #define GAMMA_LU 10
 #define GAMMA_LOG_SMUDGING 106
 #define GAMMA_LOG_SIGMA 650
-#define LOGQ_BYTES (92)
-#define LOGP_BYTES (4)
+#define LOGQ_BYTES 92
+#define LOGP_BYTES 4
 #define CT_BYTES (LOGQ_BYTES * (GAMMA_N+1))
 /* CT_BLOCK is the block to be written on disk.
    Depending on the device it will need to be a power of 2 divisible by sizeof((void *)).
@@ -80,6 +80,8 @@ void regev_encrypt(ct_t c, gamma_t gamma, gmp_randstate_t rs, sk_t sk, mpz_t m)
 
 void regev_decrypt(mpz_t m, gamma_t gamma, sk_t sk, ct_t ct);
 void ct_smudge(ct_t ct, gamma_t gamma);
+void ct_add(ct_t rop, gamma_t gamma, ct_t a, ct_t b);
+void ct_mul_ui(ct_t rop, gamma_t gamma, ct_t a, uint64_t b);
 void eval_fd(ct_t rop, gamma_t gamma, int cfd, mpz_t coeff[], size_t d);
 void eval_poly(ct_t rop, gamma_t gamma, uint8_t *c8, nmod_poly_t coeffs, size_t d);
 

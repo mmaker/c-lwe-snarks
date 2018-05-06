@@ -1,15 +1,18 @@
-#define _GNU_SOURCE
+#include "config.h"
 
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <errno.h>
+#include <sys/mman.h>
 #include <sys/random.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <fcntl.h>
 #include <unistd.h>
+
+#include <flint/nmod_poly.h>
 #include <gmp.h>
 
 #include "lwe.h"
@@ -32,20 +35,22 @@ void benchmark_eval()
   sk_t sk;
   key_gen(sk, gamma);
 
-  INIT_TIMEIT();
-  mpz_t m[GAMMA_D], coeffs[GAMMA_D];
+  mpz_t m[GAMMA_D];
   ct_t ct;
   ct_init(ct);
+
+  nmod_poly_t coeffs;
+  nmod_poly_init(coeffs, GAMMA_P);
 
   int cfd = open(COEFFS_FILENAME, O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR);
   fail_if_error();
   uint8_t buf[CT_BLOCK];
 
   for (size_t i = 0; i != GAMMA_D; i++) {
+    nmod_poly_set_coeff_ui(coeffs, i, rand_modp());
+
     mpz_init(m[i]);
-    mpz_init(coeffs[i]);
     mpz_urandomm(m[i], gamma.rstate, gamma.p);
-    mpz_urandomm(coeffs[i], gamma.rstate, gamma.p);
     regev_encrypt(ct, gamma, gamma.rstate, sk, m[i]);
     ct_export(buf, ct);
     write(cfd, buf, CT_BLOCK);
@@ -57,27 +62,23 @@ void benchmark_eval()
   ct_init(evaluated);
 
   cfd = open(COEFFS_FILENAME, O_RDONLY | O_LARGEFILE);
+  static const size_t length = GAMMA_D * CT_BYTES;
+  uint8_t *c8 = mmap(NULL, length, PROT_READ, MAP_PRIVATE, cfd, 0);
+  madvise(c8, length, MADV_SEQUENTIAL);
+
   fail_if_error();
+  INIT_TIMEIT();
   START_TIMEIT();
-  eval_fd(evaluated, gamma, cfd, coeffs, GAMMA_D);
+  eval_poly(evaluated, gamma, c8, coeffs, GAMMA_D);
   END_TIMEIT();
 
   printf(TIMEIT_FORMAT "\n", GET_TIMEIT());
+  munmap(c8, length);
   close(cfd);
   fail_if_error();
 
-  mpz_t got;
-  mpz_init(got);
-  regev_decrypt(got, gamma, sk, evaluated);
-
-  mpz_t correct;
-  mpz_init(correct);
-  mpz_dotp(correct, gamma.p, m, coeffs, GAMMA_D);
-  assert(!mpz_cmp(got, correct));
-
-  mpz_clears(got, correct, NULL);
   mpz_clearv(m, GAMMA_D);
-  mpz_clearv(coeffs, GAMMA_D);
+  nmod_poly_clear(coeffs);
   ct_clear(evaluated);
   ct_clear(ct);
 

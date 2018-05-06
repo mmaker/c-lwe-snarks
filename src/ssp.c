@@ -33,7 +33,7 @@ void nmod_poly_import(nmod_poly_t *pp, void *_buf, size_t degree)
 }
 
 
-void random_ssp(int input_fd, int circuit_fd, gamma_t gamma)
+void random_ssp(mpz_t input, int circuit_fd, gamma_t gamma)
 {
 
   uint8_t buf[8 *GAMMA_D];
@@ -41,11 +41,7 @@ void random_ssp(int input_fd, int circuit_fd, gamma_t gamma)
 
   // create a valid inut
   bzero(buf, buflen);
-  mpz_t input;
-  mpz_init(input);
   mpz_urandomb(input, gamma.rstate, GAMMA_M);
-  mpz_export(buf, NULL, -1, sizeof(uint8_t), -1, 0, input);
-  write(input_fd, buf, GAMMA_M/8);
 
   // make up some space for t at the beginning of the file
   bzero(buf, buflen);
