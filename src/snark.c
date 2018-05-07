@@ -159,24 +159,24 @@ bool verifier(gamma_t gamma, uint8_t *ssp, vrs_t vrs, proof_t pi) {
   nmod_poly_import(&pp, &ssp[ssp_v_i_offset(0)], GAMMA_D);
   mpz_set_ui(v_s, nmod_poly_evaluate_nmod(pp, vrs->s));
   mpz_add(v_s, v_s, w_s);
-  mpz_mod(v_s, v_s, gamma.p);
+  mpz_mod_ui(v_s, v_s, GAMMA_P);
 
   /*  eq-pke  */
   mpz_mul_ui(test, h_s, vrs->alpha);
-  mpz_mod(test, test, gamma.p);
+  mpz_mod_ui(test, test, GAMMA_P);
   if (mpz_cmp(test, hath_s)) goto end;
   mpz_mul_ui(test, v_s, vrs->alpha);
-  mpz_mod(test, test, gamma.p);
+  mpz_mod_ui(test, test, GAMMA_P);
   if (mpz_cmp(test, hatv_s)) goto end;
   /* eq-div */
   mpz_mul(test, v_s, v_s);
   mpz_sub_ui(test, test, 1);
   mpz_submul(test, h_s, t_s);
-  mpz_mod(test, test, gamma.p);
+  mpz_mod_ui(test, test, GAMMA_P);
   if (mpz_sgn(test)) goto end;
   /* eq-lin */
   mpz_mul_ui(test, w_s, vrs->beta);
-  mpz_mod(test, test, gamma.p);
+  mpz_mod_ui(test, test, GAMMA_P);
   if (mpz_cmp(test, b_s)) goto end;
 
   result = true;

@@ -13,10 +13,8 @@ typedef uint8_t rseed_t[32];
 typedef struct gamma {
   mpz_t p;
   mpz_t q;
-  uint64_t n;
   gmp_randstate_t rstate;
   rseed_t rseed;
-  uint64_t d;
 } gamma_t;
 
 #define GAMMA_N 1470

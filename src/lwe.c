@@ -36,9 +36,6 @@ gamma_t param_gen_from_seed(rseed_t rseed)
   mpz_init(gamma.q);
   mpz_ui_pow_ui(gamma.q, 2, GAMMA_LOGQ);
 
-  gamma.n = GAMMA_N;
-  gamma.d = GAMMA_D;
-
   gmp_randinit_default(gamma.rstate);
 
   mpz_t mpz_rseed;
@@ -106,7 +103,7 @@ void ct_smudge(ct_t ct, gamma_t gamma) {
   mpz_init(smudging);
 
   mpz_urandomb(smudging, gamma.rstate, GAMMA_LOG_SMUDGING);
-  mpz_mul(smudging, smudging, gamma.p);
+  mpz_mul_ui(smudging, smudging, GAMMA_P);
   mpz_randomsgn(smudging, gamma, smudging);
 
   mpz_add(ct[GAMMA_N], ct[GAMMA_N], smudging);
@@ -117,13 +114,13 @@ void ct_smudge(ct_t ct, gamma_t gamma) {
 
 void regev_encrypt1(ct_t c, gamma_t gamma, gmp_randstate_t rs, sk_t sk, mpz_t m, void (*chi)(mpz_t, gamma_t))
 {
-  assert(mpz_cmp(gamma.p, m) > 0);
+  assert(mpz_cmp_ui(m, GAMMA_P) < 0);
 
   // sample the error
   mpz_t e;
   mpz_init(e);
   (*chi)(e, gamma);
-  mpz_mul(c[GAMMA_N], e, gamma.p);
+  mpz_mul_ui(c[GAMMA_N], e, GAMMA_P);
   mpz_randomsgn(e, gamma, e);
 
   // sample a
@@ -148,7 +145,7 @@ void regev_decrypt(mpz_t m, gamma_t gamma, sk_t sk, ct_t ct)
   mpz_neg(m, m);
   mpz_add(m, ct[GAMMA_N], m);
   mpz_mod(m, m, gamma.q);
-  mpz_mod(m, m, gamma.p);
+  mpz_mod_ui(m, m, GAMMA_P);
 }
 
 
@@ -174,7 +171,7 @@ void ct_import(ct_t ct, uint8_t *buf)
  */
 void ct_mul(ct_t rop, gamma_t gamma, ct_t a, mpz_t b)
 {
-  assert(mpz_cmp(b, gamma.p) < 0);
+  assert(mpz_cmp_ui(b, GAMMA_P) < 0);
 
   for (size_t i = 0; i != GAMMA_N+1; i++) {
     mpz_mul(rop[i], a[i], b);
@@ -184,7 +181,7 @@ void ct_mul(ct_t rop, gamma_t gamma, ct_t a, mpz_t b)
 
 void ct_mul_ui(ct_t rop, gamma_t gamma, ct_t a, uint64_t b)
 {
-  assert(mpz_cmp_ui(gamma.p, b) > 0);
+  assert(b < GAMMA_P);
 
   for (size_t i = 0; i != GAMMA_N+1; i++) {
     mpz_mul_ui(rop[i], a[i], b);
