@@ -49,7 +49,7 @@ void setup(uint8_t *crs, vrs_t vrs, uint8_t *ssp, gamma_t gamma)
   const uint64_t v_i_bs = (nmod_poly_evaluate_nmod(v_i, vrs->s) * vrs->beta) % GAMMA_P;
   mpz_set_ui(current, v_i_bs);
   regev_encrypt(ct, gamma, gamma.rstate, vrs->sk, current);
-  ct_export(crs + t_offset, ct);
+  ct_export(&crs[t_offset], ct);
 
   // β v_i
   for (size_t i = 0; i < GAMMA_M; i++) {
@@ -57,7 +57,7 @@ void setup(uint8_t *crs, vrs_t vrs, uint8_t *ssp, gamma_t gamma)
     uint64_t v_i_bs = (nmod_poly_evaluate_nmod(v_i, vrs->s) * vrs->beta) % GAMMA_P;
     mpz_set_ui(current, v_i_bs);
     regev_encrypt(ct, gamma, gamma.rstate, vrs->sk, current);
-    ct_export(crs + v_offset(i), ct);
+    ct_export(&crs[v_offset(i)], ct);
   }
 
   nmod_poly_clear(v_i);
@@ -88,7 +88,6 @@ void prover(proof_t pi, uint8_t *crs, uint8_t *ssp, mpz_t witness, gamma_t gamma
 
   uint64_t delta = rand_modp();
   nmod_poly_scalar_mul_nmod(v, t, delta);
-  nmod_poly_add(v, v, t);
   nmod_poly_set(w, v);
 
   ct_import(pi->b_w, &crs[t_offset]);
@@ -149,7 +148,7 @@ bool verifier(gamma_t gamma, uint8_t *ssp, vrs_t vrs, proof_t pi) {
   /* eq-lin */
   mpz_mul_ui(test, w_s, vrs->beta);
   mpz_mod(test, test, gamma.p);
-  //  if (mpz_cmp(test, b_s)) goto end;
+  if (mpz_cmp(test, b_s)) goto end;
 
 
   /* v_s is just v0 + w_s*/

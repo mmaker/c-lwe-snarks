@@ -2,7 +2,7 @@
 #include <flint/nmod_poly.h>
 
 #include "lwe.h"
-static const size_t ssp_length = GAMMA_D * 8 * (GAMMA_M+2);
+static const size_t ssp_length = GAMMA_D * 8 * (GAMMA_M+3);
 
 #define ssp_t_offset 0
 #define ssp_v_i_offset(i) (GAMMA_D * 8 * ((i)+1))

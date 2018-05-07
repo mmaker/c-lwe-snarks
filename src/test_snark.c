@@ -21,7 +21,6 @@ void test_snark()
   //int crsfd = open(CRS_FILENAME, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
   //uint8_t *crs = mmap(NULL, CRS_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE, crsfd, 0);
   uint8_t *crs = calloc(1, CRS_SIZE);
-
   // SSP GENERATION
   uint8_t *ssp = calloc(1, ssp_length);
   mpz_t witness;
@@ -79,12 +78,25 @@ void test_snark()
   assert(!mpz_cmp(h_s, hat_h_s));
   mpz_clears(h_s, hat_h_s, NULL);
 
+  nmod_poly_t v_i;
+  mpz_t b_s, w_s;
+  mpz_inits(b_s, w_s, NULL);
+  nmod_poly_init(v_i, GAMMA_P);
+  nmod_poly_import(&v_i, &ssp[ssp_t_offset], GAMMA_D);
+  regev_decrypt(b_s, gamma, vrs->sk, pi->b_w);
+  regev_decrypt(w_s, gamma, vrs->sk, pi->v_w);
+  mpz_mul_ui(w_s, w_s, vrs->beta);
+  mpz_mod(w_s, w_s, gamma.p);
+  mpz_clears(b_s, w_s, NULL);
+  nmod_poly_clear(v_i);
+
   // VERIFIER TESTS
   bool out = verifier(gamma, ssp, vrs, pi);
 
   assert(out);
   proof_clear(pi);
   free(crs);
+  free(ssp);
   //munmap(crs, crs_length);
   //close(crsfd);
 }
