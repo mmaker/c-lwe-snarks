@@ -60,6 +60,7 @@ void setup(uint8_t *crs, vrs_t vrs, uint8_t *ssp, gamma_t gamma)
     ct_export(&crs[v_offset(i)], ct);
   }
 
+  ct_clear(ct);
   nmod_poly_clear(v_i);
   mpz_clear(current);
 }
@@ -136,9 +137,7 @@ void prover(proof_t pi, uint8_t *crs, uint8_t *ssp, mpz_t witness, gamma_t gamma
 bool verifier(gamma_t gamma, uint8_t *ssp, vrs_t vrs, proof_t pi) {
   bool result = false;
   mpz_t h_s, hath_s, hatv_s, w_s, b_s, t_s, v_s;
-  mpz_t test;
   mpz_inits(h_s, hath_s, hatv_s, w_s, b_s, t_s, v_s, NULL);
-  mpz_init(test);
 
   nmod_poly_t pp;
   nmod_poly_init(pp, GAMMA_P);
@@ -153,11 +152,8 @@ bool verifier(gamma_t gamma, uint8_t *ssp, vrs_t vrs, proof_t pi) {
   regev_decrypt(w_s, gamma, vrs->sk, pi->v_w);
   regev_decrypt(b_s, gamma, vrs->sk, pi->b_w);
 
-  /* eq-lin */
-  mpz_mul_ui(test, w_s, vrs->beta);
-  mpz_mod(test, test, gamma.p);
-  if (mpz_cmp(test, b_s)) goto end;
-
+  mpz_t test;
+  mpz_init(test);
 
   /* v_s is just v0 + w_s*/
   nmod_poly_import(&pp, &ssp[ssp_v_i_offset(0)], GAMMA_D);
@@ -169,17 +165,19 @@ bool verifier(gamma_t gamma, uint8_t *ssp, vrs_t vrs, proof_t pi) {
   mpz_mul_ui(test, h_s, vrs->alpha);
   mpz_mod(test, test, gamma.p);
   if (mpz_cmp(test, hath_s)) goto end;
-
   mpz_mul_ui(test, v_s, vrs->alpha);
   mpz_mod(test, test, gamma.p);
   if (mpz_cmp(test, hatv_s)) goto end;
-
   /* eq-div */
   mpz_mul(test, v_s, v_s);
   mpz_sub_ui(test, test, 1);
   mpz_submul(test, h_s, t_s);
   mpz_mod(test, test, gamma.p);
   if (mpz_sgn(test)) goto end;
+  /* eq-lin */
+  mpz_mul_ui(test, w_s, vrs->beta);
+  mpz_mod(test, test, gamma.p);
+  if (mpz_cmp(test, b_s)) goto end;
 
   result = true;
 
