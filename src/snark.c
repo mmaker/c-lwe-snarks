@@ -123,6 +123,13 @@ void prover(proof_t pi, uint8_t *crs, uint8_t *ssp, mpz_t witness, gamma_t gamma
   nmod_poly_clear(v_i);
   nmod_poly_clear(v);
   ct_clear(ct_v_i);
+
+  /* smudge proof terms */
+  ct_smudge(pi->h, gamma);
+  ct_smudge(pi->hat_h, gamma);
+  ct_smudge(pi->hat_v, gamma);
+  ct_smudge(pi->v_w, gamma);
+  ct_smudge(pi->v_w, gamma);
 }
 
 bool verifier(gamma_t gamma, uint8_t *ssp, vrs_t vrs, proof_t pi) {
