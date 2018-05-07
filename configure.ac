@@ -43,7 +43,7 @@ AC_FUNC_MALLOC
 AM_INIT_AUTOMAKE
 
 # Clear out compiler/linker flags
-CFLAGS+=" -pedantic -Wall "
+CFLAGS+=" -pedantic -Wall -std=c11 "
 
 # Shut up automake
 AM_SILENT_RULES([yes])
