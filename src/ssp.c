@@ -39,8 +39,7 @@ void random_ssp(mpz_t input, uint8_t *circuit, gamma_t gamma)
   const size_t buflen = sizeof(buf);
 
   // create a valid inut
-  //mpz_urandomb(input, gamma.rstate, GAMMA_M);
-  mpz_set_ui(input, 0);
+  mpz_urandomb(input, gamma.rstate, GAMMA_M);
 
   nmod_poly_t one;
   nmod_poly_init(one, GAMMA_P);

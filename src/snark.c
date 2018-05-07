@@ -122,6 +122,7 @@ void prover(proof_t pi, uint8_t *crs, uint8_t *ssp, mpz_t witness, gamma_t gamma
   nmod_poly_clear(h);
   nmod_poly_clear(v_i);
   nmod_poly_clear(v);
+  nmod_poly_clear(w);
   ct_clear(ct_v_i);
 
   /* smudge proof terms */
