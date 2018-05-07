@@ -23,7 +23,8 @@ AC_CHECK_LIB(flint, nmod_poly_init, ,
              [AC_MSG_ERROR([FLINT not found, see https://www.flintlib.org/])])
 
 # have _GNU_SOURCE defined aroud.
-AC_GNU_SOURCE
+AC_USE_SYSTEM_EXTENSIONS
+AC_DEFINE([_DEFAULT_SOURCE], [1], [Enable _DEFAULT_SOURCE extensions (like for madivise(2)])
 
 # Checks for header files.
 AC_CHECK_HEADERS([limits.h stdint.h stdlib.h string.h unistd.h])

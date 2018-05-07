@@ -99,6 +99,9 @@
 /* Version number of package */
 #define VERSION "0.1"
 
+/* Enable _DEFAULT_SOURCE extensions (like for madivise(2) */
+#define _DEFAULT_SOURCE 1
+
 /* Define to 1 if on MINIX. */
 /* #undef _MINIX */
 

@@ -1,20 +1,24 @@
+#include "config.h"
+
 #include <assert.h>
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <strings.h>
 #include <unistd.h>
 #include <sys/mman.h>
 #include <sys/random.h>
 
+#include <flint/nmod_poly.h>
 #include <gmp.h>
 
 #include "lwe.h"
 
 void mpz_add_dotp(mpz_t rop,
                   mpz_t modulus,
-                  mpz_t a[], mpz_t b[],
+                  mpz_t a[static 1], mpz_t b[static 1],
                   size_t len)
 {
   for (size_t i = 0; i < len; i++) {
@@ -225,7 +229,6 @@ void eval_fd(ct_t rop, gamma_t gamma, int cfd, mpz_t coeff[], size_t d)
 }
 
 
-#include <flint/nmod_poly.h>
 void eval_poly(ct_t rop, gamma_t gamma, uint8_t *c8, nmod_poly_t p, size_t d)
 {
   ct_t ct;
