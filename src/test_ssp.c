@@ -36,15 +36,11 @@ void test_import_export()
 void test_ssp()
 {
   gamma_t gamma = param_gen();
-  const char * circuit_filename = "/tmp/circuit";
 
-  int cfd = open(circuit_filename, O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR);
+  uint8_t *circuit = calloc(1, ssp_length);
   mpz_t witness;
   mpz_init(witness);
-  random_ssp(witness, cfd, gamma);
-  close(cfd);
-
-  cfd = open(circuit_filename, O_RDONLY | O_LARGEFILE);
+  random_ssp(witness, circuit, gamma);
 
   nmod_poly_t one;
   nmod_poly_init(one, GAMMA_P);
@@ -57,23 +53,15 @@ void test_ssp()
   nmod_poly_t v_i;
   nmod_poly_init(v_i, GAMMA_P);
 
-  uint8_t buf[8 * GAMMA_D];
-  const size_t buflen = sizeof(buf);
-
   // read t(x)
-  bzero(buf, buflen);
-  read(cfd, buf, buflen);
-  nmod_poly_import(&t, buf, GAMMA_D);
+  nmod_poly_import(&t, &circuit[ssp_t_offset], GAMMA_D);
 
   // read v_0(x)
-  read(cfd, buf, buflen);
-  nmod_poly_import(&test, buf, GAMMA_D);
-
+  nmod_poly_import(&test, &circuit[ssp_v_i_offset(0)], GAMMA_D);
   // read all others
-  for (size_t i = 0; i < GAMMA_M; i++) {
-    read(cfd, buf, buflen);
-    if (mpz_tstbit(witness, i)) {
-      nmod_poly_import(&v_i, buf, GAMMA_D);
+  for (size_t i = 1; i < GAMMA_M; i++) {
+    if (mpz_tstbit(witness, i-1)) {
+      nmod_poly_import(&v_i, &circuit[ssp_v_i_offset(i)], GAMMA_D);
       nmod_poly_add(test, test, v_i);
     }
   }
@@ -83,7 +71,7 @@ void test_ssp()
   nmod_poly_rem(test, test, t);
   assert(nmod_poly_degree(test) == -1);
 
-  close(cfd);
+  free(circuit);
   mpz_clear(witness);
   param_clear(&gamma);
   nmod_poly_clear(test);

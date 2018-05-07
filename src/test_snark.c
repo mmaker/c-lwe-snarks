@@ -14,10 +14,6 @@
 #include "snark.h"
 #include "tests.h"
 
-
-#define CRS_FILENAME "/home/maker/crs"
-#define SSP_FILENAME "/home/maker/ssp"
-
 void test_snark()
 {
   gamma_t gamma = param_gen();
@@ -27,17 +23,14 @@ void test_snark()
   uint8_t *crs = calloc(1, CRS_SIZE);
 
   // SSP GENERATION
-  int cfd = open(SSP_FILENAME, O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR);
+  uint8_t *ssp = calloc(1, ssp_length);
   mpz_t witness;
   mpz_init(witness);
-  random_ssp(witness, cfd, gamma);
-  close(cfd);
+  random_ssp(witness, ssp, gamma);
 
   // CRS GENERATION TEST
   vrs_t vrs;
-  cfd = open(SSP_FILENAME, O_CREAT | O_RDONLY | O_TRUNC, S_IRUSR | S_IWUSR);
-  setup(crs, vrs, cfd, gamma);
-  close(cfd);
+  setup(crs, vrs, ssp, gamma);
 
   ct_t ct_s, ct_as;
   ct_init(ct_s);
@@ -74,9 +67,7 @@ void test_snark()
   // PROVER TESTS
   proof_t pi;
   proof_init(pi);
-  cfd = open(SSP_FILENAME, O_CREAT | O_RDONLY | O_TRUNC, S_IRUSR | S_IWUSR);
-  prover(pi, crs, cfd, witness, gamma);
-  close(cfd);
+  prover(pi, crs, ssp, witness, gamma);
 
   mpz_t h_s, hat_h_s;
   mpz_inits(h_s, hat_h_s, NULL);
@@ -89,9 +80,7 @@ void test_snark()
   mpz_clears(h_s, hat_h_s, NULL);
 
   // VERIFIER TESTS
-  cfd = open(SSP_FILENAME, O_CREAT | O_RDONLY | O_TRUNC, S_IRUSR | S_IWUSR);
-  bool out = verifier(gamma, cfd, vrs, pi);
-  close(cfd);
+  bool out = verifier(gamma, ssp, vrs, pi);
 
   assert(out);
   proof_clear(pi);

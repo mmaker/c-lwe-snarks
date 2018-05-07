@@ -33,19 +33,14 @@ void nmod_poly_import(nmod_poly_t *pp, void *_buf, size_t degree)
 }
 
 
-void random_ssp(mpz_t input, int circuit_fd, gamma_t gamma)
+void random_ssp(mpz_t input, uint8_t *circuit, gamma_t gamma)
 {
-
-  uint8_t buf[8 *GAMMA_D];
+  uint8_t buf[8 * GAMMA_D];
   const size_t buflen = sizeof(buf);
 
   // create a valid inut
-  bzero(buf, buflen);
   mpz_urandomb(input, gamma.rstate, GAMMA_M);
-
-  // make up some space for t at the beginning of the file
-  bzero(buf, buflen);
-  write(circuit_fd, buf, buflen);
+  //mpz_set_ui(input, 1);
 
   nmod_poly_t one;
   nmod_poly_init(one, GAMMA_P);
@@ -57,22 +52,25 @@ void random_ssp(mpz_t input, int circuit_fd, gamma_t gamma)
   nmod_poly_t t;
   nmod_poly_init(t, GAMMA_P);
 
-  for (size_t i = 0; i < GAMMA_M+1; i++) {
+  // v_0 case
+  getrandom(buf, buflen, GRND_NONBLOCK);
+  nmod_poly_import(&v_i, buf, GAMMA_D);
+  nmod_poly_export(&circuit[ssp_v_i_offset(0)], &v_i, GAMMA_D);
+  nmod_poly_add(t, t, v_i);
+  // v_i
+  for (size_t i = 1; i < GAMMA_M; i++) {
     getrandom(buf, buflen, GRND_NONBLOCK);
     nmod_poly_import(&v_i, buf, GAMMA_D);
-    nmod_poly_export(buf, &v_i, GAMMA_D);
-    write(circuit_fd, buf, buflen);
+    nmod_poly_export(&circuit[ssp_v_i_offset(i)], &v_i, GAMMA_D);
 
-    if (i == 0  || mpz_tstbit(input, i-1)) {
+    if (mpz_tstbit(input, i-1)) {
       nmod_poly_add(t, t, v_i);
     }
   }
 
   nmod_poly_sub(t, t, one);
-  nmod_poly_export(buf, &t, GAMMA_D);
-  pwrite(circuit_fd, buf, buflen, 0);
+  nmod_poly_export(&circuit[ssp_t_offset], &t, GAMMA_D);
 
-  mpz_clear(input);
   nmod_poly_clear(v_i);
   nmod_poly_clear(t);
   nmod_poly_clear(one);
