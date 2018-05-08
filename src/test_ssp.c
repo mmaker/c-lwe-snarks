@@ -24,11 +24,14 @@ void test_import_export()
   nmod_poly_set_coeff_ui(p, 2, 3);
 
   uint64_t buf[3];
-  nmod_poly_export(buf, &p, 2);
-  nmod_poly_import(&p, buf, 2);
+  nmod_poly_export(buf, &p, 3);
+  nmod_poly_import(&q, buf, 3);
 
   nmod_poly_sub(p, p, q);
-  assert(nmod_poly_degree(q) == -1);
+  assert(nmod_poly_degree(p) == -1);
+
+  nmod_poly_clear(p);
+  nmod_poly_clear(q);
 }
 
 
@@ -77,6 +80,7 @@ void test_ssp()
   nmod_poly_clear(test);
   nmod_poly_clear(t);
   nmod_poly_clear(v_i);
+  nmod_poly_clear(one);
 }
 
 int main()

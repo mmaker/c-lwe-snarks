@@ -30,7 +30,7 @@
   key_gen(sk, gamma)
 
 #define teardown()                              \
-  key_clear(sk, gamma);                         \
+  key_clear(sk);                         \
   param_clear(&gamma)
 
 
@@ -199,7 +199,7 @@ void test_modq()
     modq(b);
     assert(!mpz_cmp(a, b));
   }
-
+  mpz_clears(a, b, q, NULL);
   teardown();
 }
 

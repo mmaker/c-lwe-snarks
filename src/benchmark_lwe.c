@@ -36,7 +36,7 @@ void benchmark_encrypt()
     printf(TIMEIT_FORMAT "\n", GET_TIMEIT());
   }
 
-  key_clear(sk, gamma);
+  key_clear(sk);
   mpz_clear(m);
   param_clear(&gamma);
 

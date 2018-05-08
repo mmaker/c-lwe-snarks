@@ -65,7 +65,7 @@ void key_gen(sk_t sk, gamma_t gamma)
   mpz_urandommv(sk, gamma.rstate, GAMMA_LOGQ, GAMMA_N);
 }
 
-void key_clear(sk_t sk, gamma_t gamma)
+void key_clear(sk_t sk)
 {
   mpz_clearv(sk, GAMMA_N);
 }
