@@ -30,11 +30,11 @@ void setup(uint8_t *crs, vrs_t vrs, uint8_t *ssp, gamma_t gamma)
 
   for (size_t i = 0; i < GAMMA_D; i++) {
     mpz_set_ui(current, s_i);
-    regev_encrypt(ct, gamma, gamma.rstate, vrs->sk, current);
+    regev_encrypt(ct, gamma.rstate, vrs->sk, current);
     ct_export(&crs[s_offset(i)], ct);
 
     mpz_set_ui(current, as_i);
-    regev_encrypt(ct, gamma, gamma.rstate, vrs->sk, current);
+    regev_encrypt(ct, gamma.rstate, vrs->sk, current);
     ct_export(&crs[as_offset(i)], ct);
 
     s_i = (s_i * vrs->s) % GAMMA_P;
@@ -48,7 +48,7 @@ void setup(uint8_t *crs, vrs_t vrs, uint8_t *ssp, gamma_t gamma)
   nmod_poly_import(&v_i, &ssp[ssp_t_offset], GAMMA_D);
   const uint64_t v_i_bs = (nmod_poly_evaluate_nmod(v_i, vrs->s) * vrs->beta) % GAMMA_P;
   mpz_set_ui(current, v_i_bs);
-  regev_encrypt(ct, gamma, gamma.rstate, vrs->sk, current);
+  regev_encrypt(ct, gamma.rstate, vrs->sk, current);
   ct_export(&crs[t_offset], ct);
 
   // β v_i
@@ -56,7 +56,7 @@ void setup(uint8_t *crs, vrs_t vrs, uint8_t *ssp, gamma_t gamma)
     nmod_poly_import(&v_i, &ssp[ssp_v_i_offset(i)], GAMMA_D);
     uint64_t v_i_bs = (nmod_poly_evaluate_nmod(v_i, vrs->s) * vrs->beta) % GAMMA_P;
     mpz_set_ui(current, v_i_bs);
-    regev_encrypt(ct, gamma, gamma.rstate, vrs->sk, current);
+    regev_encrypt(ct, gamma.rstate, vrs->sk, current);
     ct_export(&crs[v_offset(i)], ct);
   }
 
@@ -132,7 +132,7 @@ void prover(proof_t pi, uint8_t *crs, uint8_t *ssp, mpz_t witness, gamma_t gamma
   ct_smudge(pi->v_w, gamma);
 }
 
-bool verifier(gamma_t gamma, uint8_t *ssp, vrs_t vrs, proof_t pi) {
+bool verifier(uint8_t *ssp, vrs_t vrs, proof_t pi) {
   bool result = false;
   mpz_t h_s, hath_s, hatv_s, w_s, b_s, t_s, v_s;
   mpz_inits(h_s, hath_s, hatv_s, w_s, b_s, t_s, v_s, NULL);
@@ -144,11 +144,11 @@ bool verifier(gamma_t gamma, uint8_t *ssp, vrs_t vrs, proof_t pi) {
   mpz_set_ui(t_s, nmod_poly_evaluate_nmod(pp, vrs->s));
 
   /* decrypt the proof */
-  regev_decrypt(h_s, gamma, vrs->sk, pi->h);
-  regev_decrypt(hath_s, gamma, vrs->sk, pi->hat_h);
-  regev_decrypt(hatv_s, gamma, vrs->sk, pi->hat_v);
-  regev_decrypt(w_s, gamma, vrs->sk, pi->v_w);
-  regev_decrypt(b_s, gamma, vrs->sk, pi->b_w);
+  regev_decrypt(h_s, vrs->sk, pi->h);
+  regev_decrypt(hath_s, vrs->sk, pi->hat_h);
+  regev_decrypt(hatv_s, vrs->sk, pi->hat_v);
+  regev_decrypt(w_s, vrs->sk, pi->v_w);
+  regev_decrypt(b_s, vrs->sk, pi->b_w);
 
   mpz_t test;
   mpz_init(test);

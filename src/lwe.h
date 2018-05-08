@@ -48,7 +48,7 @@ void key_clear(sk_t sk);
 
 
 /* error distributions */
-void errdist_uniform(mpz_t e, gamma_t gamma);
+void errdist_uniform(mpz_t e, gmp_randstate_t gamma);
 
 /* ciphertext */
 typedef mpz_t ct_t[GAMMA_N+1];
@@ -59,24 +59,25 @@ void ct_clear(ct_t ct);
 void ct_export(uint8_t *buf, ct_t ct);
 void ct_import(ct_t ct, uint8_t *buf);
 
-void decompress_encryption(ct_t c, gamma_t gamma, gmp_randstate_t rs, mpz_t b);
-void regev_encrypt1(ct_t c, gamma_t gamma, gmp_randstate_t rs, sk_t sk, mpz_t m, void (*chi)(mpz_t, gamma_t));
+void decompress_encryption(ct_t c, gmp_randstate_t rs, mpz_t b);
+void regev_encrypt2(ct_t c, gmp_randstate_t rs, sk_t sk, mpz_t m, void (*chi)(mpz_t, gmp_randstate_t));
 
-void mpz_add_dotp(mpz_t rop, mpz_t modulus, mpz_t a[], mpz_t b[], size_t len);
+void mpz_add_dotp(mpz_t rop, mpz_t a[], mpz_t b[], size_t len);
 
-static inline void mpz_dotp(mpz_t rop, mpz_t modulus, mpz_t a[], mpz_t b[], size_t len) {
+static inline
+void mpz_dotp(mpz_t rop, mpz_t a[], mpz_t b[], size_t len) {
   mpz_set_ui(rop, 0);
-  mpz_add_dotp(rop, modulus, a, b, len);
+  mpz_add_dotp(rop, a, b, len);
 }
 
 static inline
-void regev_encrypt(ct_t c, gamma_t gamma, gmp_randstate_t rs, sk_t sk, mpz_t m)
+void regev_encrypt(ct_t c, gmp_randstate_t rs, sk_t sk, mpz_t m)
 {
-  regev_encrypt1(c, gamma, rs, sk, m, errdist_uniform);
+  regev_encrypt2(c, rs, sk, m, errdist_uniform);
 }
 
 
-void regev_decrypt(mpz_t m, gamma_t gamma, sk_t sk, ct_t ct);
+void regev_decrypt(mpz_t m, sk_t sk, ct_t ct);
 void ct_smudge(ct_t ct, gamma_t gamma);
 void ct_add(ct_t rop, ct_t a, ct_t b);
 void ct_mul_ui(ct_t rop, ct_t a, uint64_t b);
@@ -110,7 +111,8 @@ void eval_poly(ct_t rop, uint8_t *c8, nmod_poly_t coeffs, size_t d);
 } while (0)
 
 
-static inline uint64_t rand_modp()
+static inline
+uint64_t rand_modp()
 {
   uint64_t rop;
   getrandom(&rop, sizeof(rop), GRND_NONBLOCK);
@@ -131,11 +133,18 @@ static inline uint64_t rand_modp()
       }									\
   } while (0)
 
+
+/**
+ *
+ */
 static inline void modq(mpz_t a)
 {
+  assert(SIZ(a) >= 0);
+
   int pos = (GAMMA_LOGQ / 64) ;
   if (SIZ(a) > pos) {
     PTR(a)[pos] &= (1UL << 32) - 1;
     MPN_NORMALIZE(PTR(a), pos);
+    SIZ (a) = pos+1;
   }
 }

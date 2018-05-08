@@ -51,7 +51,7 @@ void benchmark_eval()
 
     mpz_init(m[i]);
     mpz_set_ui(m[i], rand_modp());
-    regev_encrypt(ct, gamma, gamma.rstate, sk, m[i]);
+    regev_encrypt(ct, gamma.rstate, sk, m[i]);
     ct_export(buf, ct);
     write(cfd, buf, CT_BLOCK);
   }

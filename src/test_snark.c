@@ -38,23 +38,23 @@ void test_snark()
   ct_import(ct_as, &crs[as_offset(0)]);
   mpz_t s, as;
   mpz_inits(s, as, NULL);
-  regev_decrypt(s, gamma, vrs->sk, ct_s);
-  regev_decrypt(as, gamma, vrs->sk, ct_as);
+  regev_decrypt(s, vrs->sk, ct_s);
+  regev_decrypt(as, vrs->sk, ct_as);
   assert(!mpz_cmp_ui(s, 1));
   assert(!mpz_cmp_ui(as, vrs->alpha));
 
   ct_import(ct_s, &crs[s_offset(1)]);
   ct_import(ct_as, &crs[as_offset(1)]);
-  regev_decrypt(s, gamma, vrs->sk, ct_s);
-  regev_decrypt(as, gamma, vrs->sk, ct_as);
+  regev_decrypt(s, vrs->sk, ct_s);
+  regev_decrypt(as, vrs->sk, ct_as);
   mpz_mul_ui(s, s, vrs->alpha);
   mpz_mod_ui(s, s, GAMMA_P);
   assert(!mpz_cmp(s, as));
 
   ct_import(ct_s, &crs[s_offset(GAMMA_D-1)]);
   ct_import(ct_as, &crs[as_offset(GAMMA_D-1)]);
-  regev_decrypt(s, gamma, vrs->sk, ct_s);
-  regev_decrypt(as, gamma, vrs->sk, ct_as);
+  regev_decrypt(s, vrs->sk, ct_s);
+  regev_decrypt(as, vrs->sk, ct_as);
   mpz_mul_ui(s, s, vrs->alpha);
   mpz_mod_ui(s, s, GAMMA_P);
   assert(!mpz_cmp(s, as));
@@ -70,8 +70,8 @@ void test_snark()
 
   mpz_t h_s, hat_h_s;
   mpz_inits(h_s, hat_h_s, NULL);
-  regev_decrypt(h_s, gamma, vrs->sk, pi->h);
-  regev_decrypt(hat_h_s, gamma, vrs->sk, pi->hat_h);
+  regev_decrypt(h_s, vrs->sk, pi->h);
+  regev_decrypt(hat_h_s, vrs->sk, pi->hat_h);
   mpz_mul_ui(h_s, h_s, vrs->alpha);
   mpz_mod_ui(h_s, h_s, GAMMA_P);
   assert(mpz_cmp_ui(h_s, 0) > 0 && mpz_cmp_ui(h_s, GAMMA_P) < 0);
@@ -83,15 +83,15 @@ void test_snark()
   mpz_inits(b_s, w_s, NULL);
   nmod_poly_init(v_i, GAMMA_P);
   nmod_poly_import(&v_i, &ssp[ssp_t_offset], GAMMA_D);
-  regev_decrypt(b_s, gamma, vrs->sk, pi->b_w);
-  regev_decrypt(w_s, gamma, vrs->sk, pi->v_w);
+  regev_decrypt(b_s, vrs->sk, pi->b_w);
+  regev_decrypt(w_s, vrs->sk, pi->v_w);
   mpz_mul_ui(w_s, w_s, vrs->beta);
   mpz_mod_ui(w_s, w_s, GAMMA_P);
   mpz_clears(b_s, w_s, NULL);
   nmod_poly_clear(v_i);
 
   // VERIFIER TESTS
-  bool out = verifier(gamma, ssp, vrs, pi);
+  bool out = verifier(ssp, vrs, pi);
 
   assert(out);
   proof_clear(pi);
