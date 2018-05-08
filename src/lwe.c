@@ -188,7 +188,7 @@ void ct_add(ct_t rop, gamma_t gamma, ct_t a, ct_t b)
 {
   for (size_t i = 0; i < GAMMA_N+1; i++) {
     mpz_add(rop[i], a[i], b[i]);
-    mpz_mod(rop[i], rop[i], gamma.q);
+    modq(rop[i]);
   }
 }
 
