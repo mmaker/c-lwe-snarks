@@ -4,10 +4,10 @@
 
 #define CRS_SIZE (CT_BYTES * GAMMA_D * (GAMMA_M + 1 + 2))
 
-#define s_offset(i) ((i) * CT_BLOCK)
-#define as_offset(i)(((i) * CT_BLOCK) + (CT_BLOCK * GAMMA_D))
-#define t_offset (2 * (CT_BLOCK * GAMMA_D))
-#define v_offset(i) (2 * (CT_BLOCK * GAMMA_D) + CT_BLOCK + (i) * CT_BLOCK)
+#define crs_s_offset(i) ((i) * CT_BLOCK)
+#define crs_as_offset(i)(((i) * CT_BLOCK) + (CT_BLOCK * GAMMA_D))
+#define crs_t_offset (2 * (CT_BLOCK * GAMMA_D))
+#define crs_v_offset(i) (2 * (CT_BLOCK * GAMMA_D) + CT_BLOCK + (i) * CT_BLOCK)
 
 
 struct proof {

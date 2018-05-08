@@ -61,11 +61,11 @@ void test_ssp()
   nmod_poly_import(&t, &circuit[ssp_t_offset], GAMMA_D);
 
   // read v_0(x)
-  nmod_poly_import(&test, &circuit[ssp_v_i_offset(0)], GAMMA_D);
+  nmod_poly_import(&test, &circuit[ssp_v_offset(0)], GAMMA_D);
   // read all others
   for (size_t i = 1; i < GAMMA_M; i++) {
     if (mpz_tstbit(witness, i-1)) {
-      nmod_poly_import(&v_i, &circuit[ssp_v_i_offset(i)], GAMMA_D);
+      nmod_poly_import(&v_i, &circuit[ssp_v_offset(i)], GAMMA_D);
       nmod_poly_add(test, test, v_i);
     }
   }

@@ -50,11 +50,11 @@ void setup(uint8_t *crs, vrs_t vrs, uint8_t *ssp, rng_t rng)
   for (size_t i = 0; i < GAMMA_D; i++) {
     mpz_set_ui(current, s_i);
     regev_encrypt(ct, rng, vrs->sk, current);
-    ct_export(&crs[s_offset(i)], ct);
+    ct_export(&crs[crs_s_offset(i)], ct);
 
     mpz_set_ui(current, as_i);
     regev_encrypt(ct, rng, vrs->sk, current);
-    ct_export(&crs[as_offset(i)], ct);
+    ct_export(&crs[crs_as_offset(i)], ct);
 
     s_i = (s_i * vrs->s) % GAMMA_P;
     as_i = (as_i * vrs->s) % GAMMA_P;
@@ -68,15 +68,15 @@ void setup(uint8_t *crs, vrs_t vrs, uint8_t *ssp, rng_t rng)
   const uint64_t v_i_bs = (nmod_poly_evaluate_nmod(v_i, vrs->s) * vrs->beta) % GAMMA_P;
   mpz_set_ui(current, v_i_bs);
   regev_encrypt(ct, rng, vrs->sk, current);
-  ct_export(&crs[t_offset], ct);
+  ct_export(&crs[crs_t_offset], ct);
 
   // β v_i
   for (size_t i = 0; i < GAMMA_M; i++) {
-    nmod_poly_import(&v_i, &ssp[ssp_v_i_offset(i)], GAMMA_D);
+    nmod_poly_import(&v_i, &ssp[ssp_v_offset(i)], GAMMA_D);
     uint64_t v_i_bs = (nmod_poly_evaluate_nmod(v_i, vrs->s) * vrs->beta) % GAMMA_P;
     mpz_set_ui(current, v_i_bs);
     regev_encrypt(ct, rng, vrs->sk, current);
-    ct_export(&crs[v_offset(i)], ct);
+    ct_export(&crs[crs_v_offset(i)], ct);
   }
 
   ct_clear(ct);
@@ -107,33 +107,33 @@ void prover(proof_t pi, uint8_t *crs, uint8_t *ssp, mpz_t witness, rng_t rng)
   uint64_t delta = rand_modp();
   nmod_poly_scalar_mul_nmod(w, t, delta);
 
-  ct_import(pi->b_w, &crs[t_offset]);
+  ct_import(pi->b_w, &crs[crs_t_offset]);
   ct_mul_ui(pi->b_w, pi->b_w, delta);
 
   for (size_t i = 1; i < GAMMA_M; i++) {
     if (mpz_tstbit(witness, i-1)) {
-      nmod_poly_import(&v_i, &ssp[ssp_v_i_offset(i)], GAMMA_D);
+      nmod_poly_import(&v_i, &ssp[ssp_v_offset(i)], GAMMA_D);
       nmod_poly_add(w, w, v_i);
 
-      ct_import(ct_v_i, &crs[v_offset(i)]);
+      ct_import(ct_v_i, &crs[crs_v_offset(i)]);
       ct_add(pi->b_w, pi->b_w, ct_v_i);
     }
   }
 
-  eval_poly(pi->v_w, crs+s_offset(0), w, GAMMA_D);
+  eval_poly(pi->v_w, &crs[crs_s_offset(0)], w, GAMMA_D);
 
   // Assume l_u = 0 . So v(x) = v_0(x) + w(x).
-  nmod_poly_import(&v_i, &ssp[ssp_v_i_offset(0)], GAMMA_D);
+  nmod_poly_import(&v_i, &ssp[ssp_v_offset(0)], GAMMA_D);
   nmod_poly_add(w, w, v_i);
-  eval_poly(pi->hat_v, crs+as_offset(0), w, GAMMA_D);
+  eval_poly(pi->hat_v, &crs[crs_as_offset(0)], w, GAMMA_D);
 
   nmod_poly_set(h, w);
   nmod_poly_pow(h, h, 2);
   nmod_poly_sub(h, h, one);
   nmod_poly_div(h, h, t);
 
-  eval_poly(pi->h, crs+s_offset(0), h, GAMMA_D);
-  eval_poly(pi->hat_h, crs+as_offset(0), h, GAMMA_D);
+  eval_poly(pi->h, &crs[crs_s_offset(0)], h, GAMMA_D);
+  eval_poly(pi->hat_h, &crs[crs_as_offset(0)], h, GAMMA_D);
 
 
   nmod_poly_clear(h);
@@ -173,7 +173,7 @@ bool verifier(uint8_t *ssp, vrs_t vrs, proof_t pi) {
   mpz_init(test);
 
   /* v_s is just v0 + w_s*/
-  nmod_poly_import(&pp, &ssp[ssp_v_i_offset(0)], GAMMA_D);
+  nmod_poly_import(&pp, &ssp[ssp_v_offset(0)], GAMMA_D);
   mpz_set_ui(v_s, nmod_poly_evaluate_nmod(pp, vrs->s));
   mpz_add(v_s, v_s, w_s);
   mpz_mod_ui(v_s, v_s, GAMMA_P);

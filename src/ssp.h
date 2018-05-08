@@ -5,7 +5,7 @@
 static const size_t ssp_length = GAMMA_D * 8 * (GAMMA_M+3);
 
 #define ssp_t_offset 0
-#define ssp_v_i_offset(i) (GAMMA_D * 8 * ((i)+1))
+#define ssp_v_offset(i) (GAMMA_D * 8 * ((i)+1))
 
 
 void nmod_poly_import(nmod_poly_t *pp, void *_buf, size_t degree);

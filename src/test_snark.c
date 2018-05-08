@@ -35,8 +35,8 @@ void test_snark()
   ct_t ct_s, ct_as;
   ct_init(ct_s);
   ct_init(ct_as);
-  ct_import(ct_s, &crs[s_offset(0)]);
-  ct_import(ct_as, &crs[as_offset(0)]);
+  ct_import(ct_s, &crs[crs_s_offset(0)]);
+  ct_import(ct_as, &crs[crs_as_offset(0)]);
   mpz_t s, as;
   mpz_inits(s, as, NULL);
   regev_decrypt(s, vrs->sk, ct_s);
@@ -44,16 +44,16 @@ void test_snark()
   assert(!mpz_cmp_ui(s, 1));
   assert(!mpz_cmp_ui(as, vrs->alpha));
 
-  ct_import(ct_s, &crs[s_offset(1)]);
-  ct_import(ct_as, &crs[as_offset(1)]);
+  ct_import(ct_s, &crs[crs_s_offset(1)]);
+  ct_import(ct_as, &crs[crs_as_offset(1)]);
   regev_decrypt(s, vrs->sk, ct_s);
   regev_decrypt(as, vrs->sk, ct_as);
   mpz_mul_ui(s, s, vrs->alpha);
   mpz_mod_ui(s, s, GAMMA_P);
   assert(!mpz_cmp(s, as));
 
-  ct_import(ct_s, &crs[s_offset(GAMMA_D-1)]);
-  ct_import(ct_as, &crs[as_offset(GAMMA_D-1)]);
+  ct_import(ct_s, &crs[crs_s_offset(GAMMA_D-1)]);
+  ct_import(ct_as, &crs[crs_as_offset(GAMMA_D-1)]);
   regev_decrypt(s, vrs->sk, ct_s);
   regev_decrypt(as, vrs->sk, ct_as);
   mpz_mul_ui(s, s, vrs->alpha);

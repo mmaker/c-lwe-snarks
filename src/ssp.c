@@ -54,13 +54,13 @@ void random_ssp(mpz_t input, uint8_t *circuit, rng_t rng)
   // v_0 case
   getrandom(buf, buflen, GRND_NONBLOCK);
   nmod_poly_import(&v_i, buf, GAMMA_D);
-  nmod_poly_export(&circuit[ssp_v_i_offset(0)], &v_i, GAMMA_D);
+  nmod_poly_export(&circuit[ssp_v_offset(0)], &v_i, GAMMA_D);
   nmod_poly_add(t, t, v_i);
   // v_i
   for (size_t i = 1; i < GAMMA_M; i++) {
     getrandom(buf, buflen, GRND_NONBLOCK);
     nmod_poly_import(&v_i, buf, GAMMA_D);
-    nmod_poly_export(&circuit[ssp_v_i_offset(i)], &v_i, GAMMA_D);
+    nmod_poly_export(&circuit[ssp_v_offset(i)], &v_i, GAMMA_D);
 
     if (mpz_tstbit(input, i-1)) {
       nmod_poly_add(t, t, v_i);
