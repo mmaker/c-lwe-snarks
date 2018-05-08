@@ -23,7 +23,7 @@
 #define GAMMA_LU 10
 #define GAMMA_LOG_SMUDGING 640
 #define GAMMA_LOG_SIGMA 556
-#define LOGQ_BYTES 92
+#define LOGQ_BYTES 92UL
 #define LOGP_BYTES 4
 #define CT_BYTES (LOGQ_BYTES * (GAMMA_N+1))
 /* CT_BLOCK is the block to be written on disk.

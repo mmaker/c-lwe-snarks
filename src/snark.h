@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include "lwe.h"
 
-#define CRS_SIZE (CT_BYTES * GAMMA_D * (GAMMA_M + 1 + 2))
+#define CRS_SIZE (CT_BYTES * (2*GAMMA_D + GAMMA_M + 1 + 2))
 
 #define crs_s_offset(i) ((i) * CT_BLOCK)
 #define crs_as_offset(i)(((i) * CT_BLOCK) + (CT_BLOCK * GAMMA_D))
