@@ -30,9 +30,6 @@ void mpz_add_dotp(mpz_t rop,
 gamma_t param_gen_from_seed(rseed_t rseed)
 {
   gamma_t gamma;
-  mpz_init(gamma.p);
-  mpz_set_ui(gamma.p, GAMMA_P);
-
   mpz_init(gamma.q);
   mpz_ui_pow_ui(gamma.q, 2, GAMMA_LOGQ);
 
@@ -58,7 +55,6 @@ gamma_t param_gen()
 void param_clear(gamma_t *g)
 {
   mpz_clear(g->q);
-  mpz_clear(g->p);
   gmp_randclear(g->rstate);
 }
 

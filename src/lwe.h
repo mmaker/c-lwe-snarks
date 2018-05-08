@@ -11,7 +11,6 @@
 typedef uint8_t rseed_t[32];
 
 typedef struct gamma {
-  mpz_t p;
   mpz_t q;
   gmp_randstate_t rstate;
   rseed_t rseed;

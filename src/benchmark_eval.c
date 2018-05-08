@@ -50,7 +50,7 @@ void benchmark_eval()
     nmod_poly_set_coeff_ui(coeffs, i, rand_modp());
 
     mpz_init(m[i]);
-    mpz_urandomm(m[i], gamma.rstate, gamma.p);
+    mpz_set_ui(m[i], rand_modp());
     regev_encrypt(ct, gamma, gamma.rstate, sk, m[i]);
     ct_export(buf, ct);
     write(cfd, buf, CT_BLOCK);

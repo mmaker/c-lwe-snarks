@@ -48,7 +48,7 @@ void test_snark()
   regev_decrypt(s, gamma, vrs->sk, ct_s);
   regev_decrypt(as, gamma, vrs->sk, ct_as);
   mpz_mul_ui(s, s, vrs->alpha);
-  mpz_mod(s, s, gamma.p);
+  mpz_mod_ui(s, s, GAMMA_P);
   assert(!mpz_cmp(s, as));
 
   ct_import(ct_s, &crs[s_offset(GAMMA_D-1)]);
@@ -56,7 +56,7 @@ void test_snark()
   regev_decrypt(s, gamma, vrs->sk, ct_s);
   regev_decrypt(as, gamma, vrs->sk, ct_as);
   mpz_mul_ui(s, s, vrs->alpha);
-  mpz_mod(s, s, gamma.p);
+  mpz_mod_ui(s, s, GAMMA_P);
   assert(!mpz_cmp(s, as));
 
   mpz_clears(s, as, NULL);
@@ -73,8 +73,8 @@ void test_snark()
   regev_decrypt(h_s, gamma, vrs->sk, pi->h);
   regev_decrypt(hat_h_s, gamma, vrs->sk, pi->hat_h);
   mpz_mul_ui(h_s, h_s, vrs->alpha);
-  mpz_mod(h_s, h_s, gamma.p);
-  assert(mpz_cmp_ui(h_s, 0) > 0 && mpz_cmp(h_s, gamma.p) < 0);
+  mpz_mod_ui(h_s, h_s, GAMMA_P);
+  assert(mpz_cmp_ui(h_s, 0) > 0 && mpz_cmp_ui(h_s, GAMMA_P) < 0);
   assert(!mpz_cmp(h_s, hat_h_s));
   mpz_clears(h_s, hat_h_s, NULL);
 
@@ -86,7 +86,7 @@ void test_snark()
   regev_decrypt(b_s, gamma, vrs->sk, pi->b_w);
   regev_decrypt(w_s, gamma, vrs->sk, pi->v_w);
   mpz_mul_ui(w_s, w_s, vrs->beta);
-  mpz_mod(w_s, w_s, gamma.p);
+  mpz_mod_ui(w_s, w_s, GAMMA_P);
   mpz_clears(b_s, w_s, NULL);
   nmod_poly_clear(v_i);
 

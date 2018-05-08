@@ -45,7 +45,7 @@ void test_import_export()
 
   uint8_t buf[CT_BLOCK];
   for (size_t i = 0; i < 10; i++) {
-    mpz_urandomm(m, gamma.rstate, gamma.p);
+    mpz_set_ui(m, rand_modp());
     regev_encrypt(c, gamma, gamma.rstate, sk, m);
     ct_export(buf, c);
     ct_import(_c, buf);
@@ -74,7 +74,7 @@ void test_correctness()
   ct_init(c);
 
   for (size_t i = 0; i < 1e1; i++) {
-    mpz_urandomm(m, gamma.rstate, gamma.p);
+    mpz_set_ui(m, rand_modp());
     regev_encrypt(c, gamma, gamma.rstate, sk, m);
     regev_decrypt(_m, gamma, sk, c);
     assert(!mpz_cmp(m, _m));
@@ -114,7 +114,7 @@ void test_eval()
 
     for(size_t i = 0; i != d; i++) {
       mpz_init(m[i]);
-      mpz_urandomm(m[i], gamma.rstate, gamma.p);
+      mpz_set_ui(m[i], rand_modp());
       nmod_poly_set_coeff_ui(coeffs, i, rand_modp());
       regev_encrypt(ct, gamma, gamma.rstate, sk, m[i]);
       ct_export(&buf[i * CT_BLOCK], ct);
@@ -145,7 +145,7 @@ void test_eval()
     for (size_t i =0 ; i < d; i++) {
       mpz_addmul_ui(correct, m[i], nmod_poly_get_coeff_ui(coeffs, i));
     }
-    mpz_mod(correct, correct, gamma.p);
+    mpz_mod_ui(correct, correct, GAMMA_P);
     assert(!mpz_cmp(got, correct));
 
     mpz_clears(got, correct, NULL);
@@ -170,7 +170,7 @@ void test_smudging()
   mpz_inits(m, _m, NULL);
 
   for (size_t i=0; i<100; i++) {
-    mpz_urandomm(m, gamma.rstate, gamma.p);
+    mpz_set_ui(m, rand_modp());
 
     regev_encrypt(ct, gamma, gamma.rstate, sk, m);
     ct_smudge(ct, gamma);
