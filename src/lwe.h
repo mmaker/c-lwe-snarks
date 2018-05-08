@@ -19,7 +19,7 @@ typedef struct gamma {
 
 #define GAMMA_N 1470
 #define GAMMA_LOGQ 736
-#define GAMMA_P 0xfffffffb
+#define GAMMA_P 0xfffffffbUL
 #define GAMMA_D (1UL << 8)
 /* must be divisible by 8 */
 #define GAMMA_M (64)
@@ -103,10 +103,10 @@ void eval_poly(ct_t rop, gamma_t gamma, uint8_t *c8, nmod_poly_t coeffs, size_t 
   } while (0)
 
 
-#define mpz_urandommv(vs, rstate, mod, len) do {        \
-    for (size_t i = 0; i < len; i++) {                  \
-      mpz_urandomm(vs[i], rstate, mod);                 \
-    }                                                   \
+#define mpz_urandommv(vs, rstate, bits, len) do {       \
+    for (size_t i = 0; i < len; i++) {                      \
+      mpz_urandomb(vs[i], rstate, bits);              \
+    }                                                       \
 } while (0)
 
 
@@ -119,7 +119,8 @@ static inline uint64_t rand_modp()
 
 static inline void modq(mpz_t a)
 {
-  static const size_t pos = (GAMMA_LOGQ / 64) ;
-  assert(a->_mp_size >= (int64_t) pos);
-  a->_mp_d[pos] &= (1UL << 33) - 1;
+  static const int pos = (GAMMA_LOGQ / 64) ;
+  if (a->_mp_size > pos) {
+    a->_mp_d[pos] &= (1UL << 33) - 1;
+  }
 }
