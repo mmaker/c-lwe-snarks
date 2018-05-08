@@ -85,7 +85,7 @@ static inline void mpz_randomsgn(mpz_t dst, gamma_t gamma, const mpz_t src)
   uint8_t sign;
   getrandom(&sign, 1, GRND_NONBLOCK);
   if (sign & 0x01) {
-    mpz_sub(dst, gamma.q, src);
+    mpz_neg(dst, src);
   }
 }
 
@@ -104,7 +104,6 @@ void ct_smudge(ct_t ct, gamma_t gamma) {
 
   mpz_add(ct[GAMMA_N], ct[GAMMA_N], smudging);
   mpz_mod(ct[GAMMA_N], ct[GAMMA_N], gamma.q);
-
   mpz_clear(smudging);
 }
 

@@ -17,6 +17,7 @@
 #include <sys/random.h>
 #include <sys/syscall.h>
 
+#include <flint/nmod_poly.h>
 #include <gmp.h>
 
 #include "lwe.h"
@@ -92,8 +93,6 @@ void test_correctness()
   }                                             \
   } while(0)
 
-#include <flint/nmod_poly.h>
-
 void test_eval()
 {
   setup();
@@ -158,8 +157,6 @@ void test_eval()
   teardown();
 }
 
-
-
 void test_smudging()
 {
   setup();
@@ -184,8 +181,31 @@ void test_smudging()
   teardown();
 }
 
+
+void test_modq()
+{
+  setup();
+
+  mpz_t a, b, q;
+  mpz_inits(a, b, q, NULL);
+  mpz_ui_pow_ui(q, 2, GAMMA_LOGQ);
+
+
+  for (size_t tries = 0; tries < 100; tries++) {
+    mpz_urandomb(a, gamma.rstate, GAMMA_LOGQ);
+    mpz_set(b, a);
+
+    modq(a);
+    mpz_mod(b, b, gamma.q);
+    assert(!mpz_cmp(a, b));
+  }
+
+  teardown();
+}
+
 int main()
 {
+  test_modq();
   test_correctness();
   test_import_export();
   test_eval();

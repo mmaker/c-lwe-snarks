@@ -1,4 +1,5 @@
 #pragma once
+#include <assert.h>
 #include <stdint.h>
 #include <sys/random.h>
 
@@ -23,7 +24,7 @@ typedef struct gamma {
 /* must be divisible by 8 */
 #define GAMMA_M (64)
 #define GAMMA_LU 10
-#define GAMMA_LOG_SMUDGING 600
+#define GAMMA_LOG_SMUDGING 640
 #define GAMMA_LOG_SIGMA 556
 #define LOGQ_BYTES 92
 #define LOGP_BYTES 4
@@ -114,4 +115,11 @@ static inline uint64_t rand_modp()
   uint64_t rop;
   getrandom(&rop, sizeof(rop), GRND_NONBLOCK);
   return rop % GAMMA_P;
+}
+
+static inline void modq(mpz_t a)
+{
+  static const size_t pos = (GAMMA_LOGQ / 64) ;
+  assert(a->_mp_size >= (int64_t) pos);
+  a->_mp_d[pos] &= (1UL << 33) - 1;
 }
