@@ -199,7 +199,7 @@ void test_modq()
     mpz_mod(b, b, gamma.q);
     assert(!mpz_cmp(a, b));
   }
-
+  mpz_clears(a, b, q, NULL);
   teardown();
 }
 
