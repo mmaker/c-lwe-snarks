@@ -97,6 +97,9 @@ void test_snark()
   proof_clear(pi);
   free(crs);
   free(ssp);
+  key_clear(vrs->sk);
+  param_clear(&gamma);
+  mpz_clear(witness);
   //munmap(crs, crs_length);
   //close(crsfd);
 }

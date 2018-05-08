@@ -120,6 +120,8 @@ void prover(proof_t pi, uint8_t *crs, uint8_t *ssp, mpz_t witness, gamma_t gamma
   nmod_poly_clear(h);
   nmod_poly_clear(v_i);
   nmod_poly_clear(w);
+  nmod_poly_clear(one);
+  nmod_poly_clear(t);
   ct_clear(ct_v_i);
 
   /* smudge proof terms */
@@ -180,5 +182,6 @@ bool verifier(gamma_t gamma, uint8_t *ssp, vrs_t vrs, proof_t pi) {
  end:
   mpz_clears(h_s, hath_s, hatv_s, w_s, b_s, t_s, v_s, NULL);
   mpz_clear(test);
+  nmod_poly_clear(pp);
   return result;
 }
