@@ -20,7 +20,11 @@ typedef struct gamma {
 #define GAMMA_N 1470
 #define GAMMA_LOGQ 736
 #define GAMMA_P 0xfffffffbUL
+#ifdef NDEBUG
+#define GAMMA_D (1UL << 15)
+#else
 #define GAMMA_D (1UL << 8)
+#endif
 /* must be divisible by 8 */
 #define GAMMA_M (64)
 #define GAMMA_LU 10
