@@ -31,6 +31,7 @@ bool benchmark_snark()
 {
   rng_t rng;
   RNG_INIT(rng);
+  INIT_TIMEIT();
 
   // SSP GENERATION
   int sspfd = open(SSP_FILENAME, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
@@ -52,23 +53,33 @@ bool benchmark_snark()
   ssp = mmap(NULL, SSP_SIZE, PROT_READ, MAP_PRIVATE, sspfd, 0);
 
   vrs_t vrs;
+  START_TIMEIT();
   setup(crs, vrs, ssp, rng);
+  END_TIMEIT();
   msync(crs, CRS_SIZE, MS_SYNC);
   munmap(crs, CRS_SIZE);
   close(crsfd);
   perror("CRS generation");
+  printf("setup\t" TIMEIT_FORMAT "\n", GET_TIMEIT());
 
   // PROVER
   proof_t pi;
   proof_init(pi);
   crsfd = open(CRS_FILENAME, O_RDONLY | O_LARGEFILE);
   crs = mmap(NULL, CRS_SIZE, PROT_READ, MAP_PRIVATE, crsfd, 0);
+  START_TIMEIT();
   prover(pi, crs, ssp, witness, rng);
+  END_TIMEIT();
   perror("Prover");
+  printf("prover\t" TIMEIT_FORMAT "\n", GET_TIMEIT());
+
 
   // VERIFIER
+  START_TIMEIT();
   bool out = verifier(ssp, vrs, pi);
+  END_TIMEIT();
   perror("Verifier");
+  printf("verifier\t" TIMEIT_FORMAT "\n", GET_TIMEIT());
 
   proof_clear(pi);
   munmap(crs, CRS_SIZE);
