@@ -1,4 +1,4 @@
-#define _GNU_SOURCE
+#include "config.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -38,12 +38,13 @@ void test_import_export()
 
 void test_ssp()
 {
-  gamma_t gamma = param_gen();
+  rng_t rng;
+  RNG_INIT(rng);
 
   uint8_t *circuit = calloc(1, ssp_length);
   mpz_t witness;
   mpz_init(witness);
-  random_ssp(witness, circuit, gamma);
+  random_ssp(witness, circuit, rng);
 
   nmod_poly_t one;
   nmod_poly_init(one, GAMMA_P);
@@ -76,7 +77,7 @@ void test_ssp()
 
   free(circuit);
   mpz_clear(witness);
-  param_clear(&gamma);
+  rng_clear(rng);
   nmod_poly_clear(test);
   nmod_poly_clear(t);
   nmod_poly_clear(v_i);

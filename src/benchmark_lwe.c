@@ -13,10 +13,11 @@
 
 void benchmark_encrypt()
 {
-  gamma_t gamma = param_gen();
+  rng_t rng;
+  RNG_INIT(rng);
 
   sk_t sk;
-  key_gen(sk, gamma);
+  key_gen(sk, rng);
 
   mpz_t m;
   mpz_init(m);
@@ -27,7 +28,7 @@ void benchmark_encrypt()
   INIT_TIMEIT();
   for (size_t i = 0; i < 1e4; i++) {
     mpz_set_ui(m, rand_modp());
-    regev_encrypt(c, gamma.rstate, sk, m);
+    regev_encrypt(c, rng, sk, m);
 
     START_TIMEIT();
     regev_decrypt(m, sk, c);
@@ -39,7 +40,7 @@ void benchmark_encrypt()
   key_clear(sk);
   mpz_clear(m);
   ct_clear(c);
-  param_clear(&gamma);
+  rng_clear(rng);
 
 }
 

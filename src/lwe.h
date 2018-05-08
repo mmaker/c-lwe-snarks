@@ -9,22 +9,15 @@
 
 /* Parameter generation */
 
-typedef uint8_t rseed_t[32];
-
-typedef struct gamma {
-  mpz_t q;
-  gmp_randstate_t rstate;
-  rseed_t rseed;
-} gamma_t;
-
-#define GAMMA_N 1470
-#define GAMMA_LOGQ 736
-#define GAMMA_P 0xfffffffbUL
 #ifdef NDEBUG
 #define GAMMA_D (1UL << 15)
 #else
 #define GAMMA_D (1UL << 8)
 #endif
+
+#define GAMMA_N 1470
+#define GAMMA_LOGQ 736
+#define GAMMA_P 0xfffffffbUL
 /* must be divisible by 8 */
 #define GAMMA_M (64)
 #define GAMMA_LU 10
@@ -39,20 +32,27 @@ typedef struct gamma {
 #define CT_BLOCK CT_BYTES //(1 << 18)
 
 
+typedef uint8_t rseed_t[32];
+typedef gmp_randstate_t rng_t;
 
-gamma_t param_gen();
-gamma_t param_gen_from_seed(rseed_t rseed);
-void param_clear(gamma_t *g);
+void rng_init(rng_t rs, uint8_t *rseed);
+void rng_clear(rng_t rs);
+#define RNG_INIT(rs) do {                              \
+    rseed_t rseed;                                      \
+    getrandom(&rseed, sizeof(rseed_t), GRND_NONBLOCK);  \
+    rng_init(rs, rseed);                                \
+  } while(0)
+
 
 /* secret key generation */
 typedef mpz_t sk_t[GAMMA_N];
 
-void key_gen(sk_t sk, gamma_t gamma);
+void key_gen(sk_t sk, rng_t rng);
 void key_clear(sk_t sk);
 
 
 /* error distributions */
-void errdist_uniform(mpz_t e, gmp_randstate_t gamma);
+void errdist_uniform(mpz_t e, rng_t rng);
 
 /* ciphertext */
 typedef mpz_t ct_t[GAMMA_N+1];
@@ -82,7 +82,7 @@ void regev_encrypt(ct_t c, gmp_randstate_t rs, sk_t sk, mpz_t m)
 
 
 void regev_decrypt(mpz_t m, sk_t sk, ct_t ct);
-void ct_smudge(ct_t ct, gamma_t gamma);
+void ct_smudge(ct_t ct, rng_t rng);
 void ct_add(ct_t rop, ct_t a, ct_t b);
 void ct_mul_ui(ct_t rop, ct_t a, uint64_t b);
 void eval_poly(ct_t rop, uint8_t *c8, nmod_poly_t coeffs, size_t d);

@@ -31,9 +31,10 @@
 
 void benchmark_eval()
 {
-  gamma_t gamma = param_gen();
+  rng_t rng;
+  RNG_INIT(rng);
   sk_t sk;
-  key_gen(sk, gamma);
+  key_gen(sk, rng);
 
   mpz_t m[GAMMA_D];
   ct_t ct;
@@ -51,7 +52,7 @@ void benchmark_eval()
 
     mpz_init(m[i]);
     mpz_set_ui(m[i], rand_modp());
-    regev_encrypt(ct, gamma.rstate, sk, m[i]);
+    regev_encrypt(ct, rng, sk, m[i]);
     ct_export(buf, ct);
     write(cfd, buf, CT_BLOCK);
   }
@@ -83,7 +84,7 @@ void benchmark_eval()
   ct_clear(ct);
 
   key_clear(sk);
-  param_clear(&gamma);
+  rng_clear(rng);
 }
 
 

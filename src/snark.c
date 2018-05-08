@@ -14,12 +14,12 @@
 #include "ssp.h"
 #include "snark.h"
 
-void setup(uint8_t *crs, vrs_t vrs, uint8_t *ssp, gamma_t gamma)
+void setup(uint8_t *crs, vrs_t vrs, uint8_t *ssp, rng_t rng)
 {
   vrs->alpha = rand_modp();
   vrs->beta = rand_modp();
   vrs->s = rand_modp();
-  key_gen(vrs->sk, gamma);
+  key_gen(vrs->sk, rng);
 
   ct_t ct;
   ct_init(ct);
@@ -31,11 +31,11 @@ void setup(uint8_t *crs, vrs_t vrs, uint8_t *ssp, gamma_t gamma)
 
   for (size_t i = 0; i < GAMMA_D; i++) {
     mpz_set_ui(current, s_i);
-    regev_encrypt(ct, gamma.rstate, vrs->sk, current);
+    regev_encrypt(ct, rng, vrs->sk, current);
     ct_export(&crs[s_offset(i)], ct);
 
     mpz_set_ui(current, as_i);
-    regev_encrypt(ct, gamma.rstate, vrs->sk, current);
+    regev_encrypt(ct, rng, vrs->sk, current);
     ct_export(&crs[as_offset(i)], ct);
 
     s_i = (s_i * vrs->s) % GAMMA_P;
@@ -49,7 +49,7 @@ void setup(uint8_t *crs, vrs_t vrs, uint8_t *ssp, gamma_t gamma)
   nmod_poly_import(&v_i, &ssp[ssp_t_offset], GAMMA_D);
   const uint64_t v_i_bs = (nmod_poly_evaluate_nmod(v_i, vrs->s) * vrs->beta) % GAMMA_P;
   mpz_set_ui(current, v_i_bs);
-  regev_encrypt(ct, gamma.rstate, vrs->sk, current);
+  regev_encrypt(ct, rng, vrs->sk, current);
   ct_export(&crs[t_offset], ct);
 
   // β v_i
@@ -57,7 +57,7 @@ void setup(uint8_t *crs, vrs_t vrs, uint8_t *ssp, gamma_t gamma)
     nmod_poly_import(&v_i, &ssp[ssp_v_i_offset(i)], GAMMA_D);
     uint64_t v_i_bs = (nmod_poly_evaluate_nmod(v_i, vrs->s) * vrs->beta) % GAMMA_P;
     mpz_set_ui(current, v_i_bs);
-    regev_encrypt(ct, gamma.rstate, vrs->sk, current);
+    regev_encrypt(ct, rng, vrs->sk, current);
     ct_export(&crs[v_offset(i)], ct);
   }
 
@@ -66,7 +66,7 @@ void setup(uint8_t *crs, vrs_t vrs, uint8_t *ssp, gamma_t gamma)
   mpz_clear(current);
 }
 
-void prover(proof_t pi, uint8_t *crs, uint8_t *ssp, mpz_t witness, gamma_t gamma)
+void prover(proof_t pi, uint8_t *crs, uint8_t *ssp, mpz_t witness, rng_t rng)
 {
   nmod_poly_t t;
   nmod_poly_init(t, GAMMA_P);
@@ -126,11 +126,11 @@ void prover(proof_t pi, uint8_t *crs, uint8_t *ssp, mpz_t witness, gamma_t gamma
   ct_clear(ct_v_i);
 
   /* smudge proof terms */
-  ct_smudge(pi->h, gamma);
-  ct_smudge(pi->hat_h, gamma);
-  ct_smudge(pi->hat_v, gamma);
-  ct_smudge(pi->v_w, gamma);
-  ct_smudge(pi->v_w, gamma);
+  ct_smudge(pi->h, rng);
+  ct_smudge(pi->hat_h, rng);
+  ct_smudge(pi->hat_v, rng);
+  ct_smudge(pi->v_w, rng);
+  ct_smudge(pi->v_w, rng);
 }
 
 bool verifier(uint8_t *ssp, vrs_t vrs, proof_t pi) {

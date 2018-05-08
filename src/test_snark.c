@@ -16,7 +16,8 @@
 
 void test_snark()
 {
-  gamma_t gamma = param_gen();
+  rng_t rng;
+  RNG_INIT(rng);
 
   //int crsfd = open(CRS_FILENAME, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
   //uint8_t *crs = mmap(NULL, CRS_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE, crsfd, 0);
@@ -25,11 +26,11 @@ void test_snark()
   uint8_t *ssp = calloc(1, ssp_length);
   mpz_t witness;
   mpz_init(witness);
-  random_ssp(witness, ssp, gamma);
+  random_ssp(witness, ssp, rng);
 
   // CRS GENERATION TEST
   vrs_t vrs;
-  setup(crs, vrs, ssp, gamma);
+  setup(crs, vrs, ssp, rng);
 
   ct_t ct_s, ct_as;
   ct_init(ct_s);
@@ -66,7 +67,7 @@ void test_snark()
   // PROVER TESTS
   proof_t pi;
   proof_init(pi);
-  prover(pi, crs, ssp, witness, gamma);
+  prover(pi, crs, ssp, witness, rng);
 
   mpz_t h_s, hat_h_s;
   mpz_inits(h_s, hat_h_s, NULL);
@@ -98,7 +99,7 @@ void test_snark()
   free(crs);
   free(ssp);
   key_clear(vrs->sk);
-  param_clear(&gamma);
+  rng_clear(rng);
   mpz_clear(witness);
   //munmap(crs, crs_length);
   //close(crsfd);

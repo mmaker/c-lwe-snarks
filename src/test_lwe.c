@@ -1,4 +1,4 @@
-#define _GNU_SOURCE
+#include "config.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -25,13 +25,14 @@
 
 
 #define setup()                                 \
-  gamma_t gamma = param_gen();                  \
+  rng_t rng;                                    \
+  RNG_INIT(rng);                                \
   sk_t sk;                                      \
-  key_gen(sk, gamma)
+  key_gen(sk, rng)
 
 #define teardown()                              \
   key_clear(sk);                                \
-  param_clear(&gamma)
+  rng_clear(rng)
 
 
 void test_import_export()
@@ -47,7 +48,7 @@ void test_import_export()
   uint8_t buf[CT_BLOCK];
   for (size_t i = 0; i < 10; i++) {
     mpz_set_ui(m, rand_modp());
-    regev_encrypt(c, gamma.rstate, sk, m);
+    regev_encrypt(c, rng, sk, m);
     ct_export(buf, c);
     ct_import(_c, buf);
     for (size_t i = 0; i < GAMMA_N+1; i++) {
@@ -76,7 +77,7 @@ void test_correctness()
 
   for (size_t i = 0; i < 1e1; i++) {
     mpz_set_ui(m, rand_modp());
-    regev_encrypt(c, gamma.rstate, sk, m);
+    regev_encrypt(c, rng, sk, m);
     regev_decrypt(_m, sk, c);
     assert(!mpz_cmp(m, _m));
   }
@@ -100,7 +101,7 @@ void test_eval()
   const char * coeffs_filename = "/tmp/coeffs";
 
   uint8_t *buf = calloc(1, d * CT_BLOCK);
-  
+
   for (size_t tries = 0; tries != 10; tries++) {
     mpz_t m[d];
 
@@ -116,7 +117,7 @@ void test_eval()
       mpz_init(m[i]);
       mpz_set_ui(m[i], rand_modp());
       nmod_poly_set_coeff_ui(coeffs, i, rand_modp());
-      regev_encrypt(ct, gamma.rstate, sk, m[i]);
+      regev_encrypt(ct, rng, sk, m[i]);
       ct_export(&buf[i * CT_BLOCK], ct);
     }
     write(cfd, buf, d * CT_BLOCK);
@@ -171,8 +172,8 @@ void test_smudging()
   for (size_t i=0; i<100; i++) {
     mpz_set_ui(m, rand_modp());
 
-    regev_encrypt(ct, gamma.rstate, sk, m);
-    ct_smudge(ct, gamma);
+    regev_encrypt(ct, rng, sk, m);
+    ct_smudge(ct, rng);
 
     regev_decrypt(_m, sk, ct);
     assert(!mpz_cmp(m, _m));
@@ -198,7 +199,7 @@ void test_modq()
   modq(b);
 
   for (size_t tries = 0; tries < 100; tries++) {
-    mpz_urandomb(a, gamma.rstate, GAMMA_LOGQ+100);
+    mpz_urandomb(a, rng, GAMMA_LOGQ+100);
     mpz_set(b, a);
 
     modq(a);

@@ -49,6 +49,6 @@ static inline void proof_clear(proof_t pi)
   ct_clear(pi->b_w);
 }
 
-void setup(uint8_t *crs, vrs_t vrs, uint8_t *ssp, gamma_t gamma);
-void prover(proof_t pi, uint8_t *crs, uint8_t *ssp, mpz_t witness, gamma_t gamma);
+void setup(uint8_t *crs, vrs_t vrs, uint8_t *ssp, rng_t rng);
+void prover(proof_t pi, uint8_t *crs, uint8_t *ssp, mpz_t witness, rng_t rng);
 bool verifier(uint8_t *ssp, vrs_t vrs, proof_t pi);

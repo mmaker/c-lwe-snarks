@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <errno.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
@@ -16,6 +17,21 @@
 
 #include "lwe.h"
 
+void rng_init(rng_t rs, uint8_t *rseed)
+{
+  gmp_randinit_default(rs);
+  mpz_t mpz_rseed;
+  mpz_init(mpz_rseed);
+  mpz_import(mpz_rseed, 32, 1, sizeof(rseed[0]), 0, 0, rseed);
+  gmp_randseed(rs, mpz_rseed);
+  mpz_clear(mpz_rseed);
+}
+
+void rng_clear(gmp_randstate_t rs)
+{
+  gmp_randclear(rs);
+}
+
 void mpz_add_dotp(mpz_t rop,
                   mpz_t a[static 1], mpz_t b[static 1],
                   size_t len)
@@ -26,42 +42,10 @@ void mpz_add_dotp(mpz_t rop,
   modq(rop);
 }
 
-gamma_t param_gen_from_seed(rseed_t rseed)
-{
-  gamma_t gamma;
-  mpz_init(gamma.q);
-  mpz_ui_pow_ui(gamma.q, 2, GAMMA_LOGQ);
-
-  gmp_randinit_default(gamma.rstate);
-
-  mpz_t mpz_rseed;
-  mpz_init(mpz_rseed);
-  mpz_import(mpz_rseed, 32, 1, sizeof(rseed[0]), 0, 0, rseed);
-  gmp_randseed(gamma.rstate, mpz_rseed);
-  mpz_clear(mpz_rseed);
-
-  memmove(gamma.rseed, rseed, sizeof(rseed_t));
-  return gamma;
-}
-
-gamma_t param_gen()
-{
-  rseed_t rseed;
-  getrandom(&rseed, sizeof(rseed_t), GRND_NONBLOCK);
-  return param_gen_from_seed(rseed);
-}
-
-void param_clear(gamma_t *g)
-{
-  mpz_clear(g->q);
-  gmp_randclear(g->rstate);
-}
-
-
-void key_gen(sk_t sk, gamma_t gamma)
+void key_gen(sk_t sk, rng_t rng)
 {
   mpz_initv(sk, GAMMA_N);
-  mpz_urandommv(sk, gamma.rstate, GAMMA_LOGQ, GAMMA_N);
+  mpz_urandommv(sk, rng, GAMMA_LOGQ, GAMMA_N);
 }
 
 void key_clear(sk_t sk)
@@ -93,11 +77,11 @@ void errdist_uniform(mpz_t e, gmp_randstate_t rstate)
   mpz_urandomb(e, rstate, GAMMA_LOG_SIGMA+3);
 }
 
-void ct_smudge(ct_t ct, gamma_t gamma) {
+void ct_smudge(ct_t ct, rng_t rng) {
   mpz_t smudging;
   mpz_init(smudging);
 
-  mpz_urandomb(smudging, gamma.rstate, GAMMA_LOG_SMUDGING);
+  mpz_urandomb(smudging, rng, GAMMA_LOG_SMUDGING);
   mpz_randomsgn(smudging, smudging);
   mpz_mul_ui(smudging, smudging, GAMMA_P);
 
@@ -127,9 +111,9 @@ void regev_encrypt2(ct_t c, gmp_randstate_t rs, sk_t sk, mpz_t m, void (*chi)(mp
   mpz_clear(e);
 }
 
-void decompress_encryption(ct_t c, gmp_randstate_t rs, mpz_t b)
+void decompress_encryption(ct_t c, rng_t rng, mpz_t b)
 {
-  mpz_urandommv(c, rs, GAMMA_LOGQ, GAMMA_N);
+  mpz_urandommv(c, rng, GAMMA_LOGQ, GAMMA_N);
   mpz_set(c[GAMMA_N], b);
 }
 

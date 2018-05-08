@@ -33,13 +33,13 @@ void nmod_poly_import(nmod_poly_t *pp, void *_buf, size_t degree)
 }
 
 
-void random_ssp(mpz_t input, uint8_t *circuit, gamma_t gamma)
+void random_ssp(mpz_t input, uint8_t *circuit, rng_t rng)
 {
   uint8_t buf[8 * GAMMA_D];
   const size_t buflen = sizeof(buf);
 
   // create a valid inut
-  mpz_urandomb(input, gamma.rstate, GAMMA_M);
+  mpz_urandomb(input, rng, GAMMA_M);
 
   nmod_poly_t one;
   nmod_poly_init(one, GAMMA_P);
