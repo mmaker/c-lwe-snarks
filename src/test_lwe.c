@@ -196,7 +196,7 @@ void test_modq()
     mpz_set(b, a);
 
     modq(a);
-    mpz_mod(b, b, gamma.q);
+    modq(b);
     assert(!mpz_cmp(a, b));
   }
   mpz_clears(a, b, q, NULL);

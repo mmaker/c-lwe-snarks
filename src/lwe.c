@@ -104,7 +104,7 @@ void ct_smudge(ct_t ct, gamma_t gamma) {
   mpz_mul_ui(smudging, smudging, GAMMA_P);
 
   mpz_add(ct[GAMMA_N], ct[GAMMA_N], smudging);
-  mpz_mod(ct[GAMMA_N], ct[GAMMA_N], gamma.q);
+  modq(ct[GAMMA_N]);
   mpz_clear(smudging);
 }
 
@@ -170,7 +170,7 @@ void ct_mul(ct_t rop, gamma_t gamma, ct_t a, mpz_t b)
 
   for (size_t i = 0; i != GAMMA_N+1; i++) {
     mpz_mul(rop[i], a[i], b);
-    mpz_mod(rop[i], rop[i], gamma.q);
+    modq(rop[i]);
   }
 }
 
@@ -178,15 +178,15 @@ void ct_mul_ui(ct_t rop, gamma_t gamma, ct_t a, uint64_t b)
 {
   assert(b < GAMMA_P);
 
-  for (size_t i = 0; i != GAMMA_N+1; i++) {
+  for (size_t i = 0; i < GAMMA_N+1; i++) {
     mpz_mul_ui(rop[i], a[i], b);
-    mpz_mod(rop[i], rop[i], gamma.q);
+    modq(rop[i]);
   }
 }
 
 void ct_add(ct_t rop, gamma_t gamma, ct_t a, ct_t b)
 {
-  for (size_t i = 0; i != GAMMA_N+1; i++) {
+  for (size_t i = 0; i < GAMMA_N+1; i++) {
     mpz_add(rop[i], a[i], b[i]);
     mpz_mod(rop[i], rop[i], gamma.q);
   }
@@ -201,7 +201,7 @@ void ct_add(ct_t rop, gamma_t gamma, ct_t a, ct_t b)
   } while(0)
 
 
-void eval_fd(ct_t rop, gamma_t gamma, int cfd, mpz_t coeff[], size_t d)
+void eval_fd(ct_t rop, gamma_t gamma, int cfd, mpz_t coeff[static 1], size_t d)
 {
   ct_t ct;
   ct_init(ct);
@@ -210,7 +210,7 @@ void eval_fd(ct_t rop, gamma_t gamma, int cfd, mpz_t coeff[], size_t d)
   uint8_t *c8 = mmap(NULL, length, PROT_READ, MAP_PRIVATE, cfd, 0);
   madvise(c8, length, MADV_SEQUENTIAL);
 
-  for (size_t i = 0; i != d; i++) {
+  for (size_t i = 0; i < d; i++) {
     ct_import(ct, &c8[i * CT_BLOCK]);
     ct_mul(ct, gamma, ct, coeff[i]);
     ct_add(rop, gamma, rop, ct);
@@ -226,7 +226,7 @@ void eval_poly(ct_t rop, gamma_t gamma, uint8_t *c8, nmod_poly_t p, size_t d)
   ct_t ct;
   ct_init(ct);
 
-  for (size_t i = 0; i != d; i++) {
+  for (size_t i = 0; i < d; i++) {
     ct_import(ct, &c8[i * CT_BLOCK]);
     ct_mul_ui(ct, gamma, ct, nmod_poly_get_coeff_ui(p, i));
     ct_add(rop, gamma, rop, ct);

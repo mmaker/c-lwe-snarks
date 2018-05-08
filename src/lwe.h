@@ -117,10 +117,25 @@ static inline uint64_t rand_modp()
   return rop % GAMMA_P;
 }
 
+
+#define SIZ(x) ((x)->_mp_size)
+#define PTR(x) ((x)->_mp_d)
+
+#define MPN_NORMALIZE(DST, NLIMBS)                                      \
+  do {									\
+    while (1)								\
+      {									\
+	if ((DST)[(NLIMBS) - 1] != 0)					\
+	  break;							\
+	(NLIMBS)--;							\
+      }									\
+  } while (0)
+
 static inline void modq(mpz_t a)
 {
-  static const int pos = (GAMMA_LOGQ / 64) ;
+  int pos = (GAMMA_LOGQ / 64) ;
   if (a->_mp_size > pos) {
-    a->_mp_d[pos] &= (1UL << 33) - 1;
+    PTR(a)[pos] &= (1UL << 33) - 1;
   }
+  MPN_NORMALIZE(PTR(a), pos);
 }
