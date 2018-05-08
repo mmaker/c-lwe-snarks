@@ -35,13 +35,12 @@ void test_import_export()
 }
 
 
-
 void test_ssp()
 {
   rng_t rng;
   RNG_INIT(rng);
 
-  uint8_t *circuit = calloc(1, ssp_length);
+  uint8_t *circuit = calloc(1, SSP_SIZE);
   mpz_t witness;
   mpz_init(witness);
   random_ssp(witness, circuit, rng);
@@ -83,6 +82,7 @@ void test_ssp()
   nmod_poly_clear(v_i);
   nmod_poly_clear(one);
 }
+
 
 int main()
 {

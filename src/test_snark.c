@@ -23,7 +23,7 @@ void test_snark()
   //uint8_t *crs = mmap(NULL, CRS_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE, crsfd, 0);
   uint8_t *crs = calloc(1, CRS_SIZE);
   // SSP GENERATION
-  uint8_t *ssp = calloc(1, ssp_length);
+  uint8_t *ssp = calloc(1, SSP_SIZE);
   mpz_t witness;
   mpz_init(witness);
   random_ssp(witness, ssp, rng);

@@ -1,19 +1,18 @@
 #include "config.h"
 
-#include <assert.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include <errno.h>
 #include <sys/mman.h>
 #include <sys/random.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
-#include <fcntl.h>
 #include <unistd.h>
 
-#include <flint/nmod_poly.h>
 #include <gmp.h>
+#include <flint/nmod_poly.h>
 
 #include "lwe.h"
 #include "timeit.h"
