@@ -44,7 +44,7 @@ void param_clear(gamma_t *g);
 typedef mpz_t sk_t[GAMMA_N];
 
 void key_gen(sk_t sk, gamma_t gamma);
-void key_clear(sk_t sk, gamma_t gamma);
+void key_clear(sk_t sk);
 
 
 /* error distributions */

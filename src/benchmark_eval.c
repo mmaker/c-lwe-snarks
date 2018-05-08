@@ -82,7 +82,7 @@ void benchmark_eval()
   ct_clear(evaluated);
   ct_clear(ct);
 
-  key_clear(sk, gamma);
+  key_clear(sk);
   param_clear(&gamma);
 }
 

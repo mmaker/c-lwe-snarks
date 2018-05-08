@@ -30,7 +30,7 @@
   key_gen(sk, gamma)
 
 #define teardown()                              \
-  key_clear(sk, gamma);                         \
+  key_clear(sk);                         \
   param_clear(&gamma)
 
 
