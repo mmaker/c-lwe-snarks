@@ -85,6 +85,7 @@ static inline void mpz_randomsgn(mpz_t dst, gamma_t gamma, const mpz_t src)
   uint8_t sign;
   getrandom(&sign, 1, GRND_NONBLOCK);
   if (sign & 0x01) {
+    // mpz_sub(dst, gamma.q, src);
     mpz_neg(dst, src);
   }
 }
@@ -98,7 +99,7 @@ void ct_smudge(ct_t ct, gamma_t gamma) {
   mpz_t smudging;
   mpz_init(smudging);
 
-  mpz_urandomb(smudging, gamma.rstate, 550);
+  mpz_urandomb(smudging, gamma.rstate, GAMMA_LOG_SMUDGING);
   mpz_randomsgn(smudging, gamma, smudging);
   mpz_mul_ui(smudging, smudging, GAMMA_P);
 
@@ -139,7 +140,6 @@ void regev_decrypt(mpz_t m, gamma_t gamma, sk_t sk, ct_t ct)
   mpz_dotp(m, gamma.q, ct, sk, GAMMA_N);
   mpz_neg(m, m);
   mpz_add(m, ct[GAMMA_N], m);
-  mpz_mod(m, m, gamma.q);
   mpz_mod_ui(m, m, GAMMA_P);
 }
 
