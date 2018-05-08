@@ -144,6 +144,6 @@ static inline void modq(mpz_t a)
   if (SIZ(a) > pos) {
     PTR(a)[pos] &= (1UL << 32) - 1;
     MPN_NORMALIZE(PTR(a), pos);
-    SIZ(a) = pos+1;
+    SIZ(a) = pos;
   }
 }
