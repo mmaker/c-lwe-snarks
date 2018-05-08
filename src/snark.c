@@ -89,7 +89,7 @@ void prover(proof_t pi, uint8_t *crs, uint8_t *ssp, mpz_t witness, gamma_t gamma
   nmod_poly_scalar_mul_nmod(w, t, delta);
 
   ct_import(pi->b_w, &crs[t_offset]);
-  ct_mul_ui(pi->b_w, gamma, pi->b_w, delta);
+  ct_mul_ui(pi->b_w, pi->b_w, delta);
 
   for (size_t i = 1; i < GAMMA_M; i++) {
     if (mpz_tstbit(witness, i-1)) {
@@ -97,24 +97,24 @@ void prover(proof_t pi, uint8_t *crs, uint8_t *ssp, mpz_t witness, gamma_t gamma
       nmod_poly_add(w, w, v_i);
 
       ct_import(ct_v_i, &crs[v_offset(i)]);
-      ct_add(pi->b_w, gamma, pi->b_w, ct_v_i);
+      ct_add(pi->b_w, pi->b_w, ct_v_i);
     }
   }
 
-  eval_poly(pi->v_w, gamma, crs+s_offset(0), w, GAMMA_D);
+  eval_poly(pi->v_w, crs+s_offset(0), w, GAMMA_D);
 
   // Assume l_u = 0 . So v(x) = v_0(x) + w(x).
   nmod_poly_import(&v_i, &ssp[ssp_v_i_offset(0)], GAMMA_D);
   nmod_poly_add(w, w, v_i);
-  eval_poly(pi->hat_v, gamma, crs+as_offset(0), w, GAMMA_D);
+  eval_poly(pi->hat_v, crs+as_offset(0), w, GAMMA_D);
 
   nmod_poly_set(h, w);
   nmod_poly_pow(h, h, 2);
   nmod_poly_sub(h, h, one);
   nmod_poly_div(h, h, t);
 
-  eval_poly(pi->h, gamma, crs+s_offset(0), h, GAMMA_D);
-  eval_poly(pi->hat_h, gamma, crs+as_offset(0), h, GAMMA_D);
+  eval_poly(pi->h, crs+s_offset(0), h, GAMMA_D);
+  eval_poly(pi->hat_h, crs+as_offset(0), h, GAMMA_D);
 
 
   nmod_poly_clear(h);

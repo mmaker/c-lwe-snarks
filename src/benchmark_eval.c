@@ -69,7 +69,7 @@ void benchmark_eval()
   fail_if_error();
   INIT_TIMEIT();
   START_TIMEIT();
-  eval_poly(evaluated, gamma, c8, coeffs, GAMMA_D);
+  eval_poly(evaluated, c8, coeffs, GAMMA_D);
   END_TIMEIT();
 
   printf(TIMEIT_FORMAT "\n", GET_TIMEIT());

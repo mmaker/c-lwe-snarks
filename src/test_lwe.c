@@ -130,7 +130,7 @@ void test_eval()
     uint8_t *c8 = mmap(NULL, length, PROT_READ, MAP_PRIVATE, cfd, 0);
     madvise(c8, length, MADV_SEQUENTIAL);
     fail_if_error();
-    eval_poly(evaluated, gamma, c8, coeffs, d);
+    eval_poly(evaluated, c8, coeffs, d);
     munmap(c8, length);
     close(cfd);
     fail_if_error();

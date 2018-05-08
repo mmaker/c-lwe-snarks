@@ -80,7 +80,7 @@ void ct_clear(ct_t ct)
   mpz_clearv(ct, GAMMA_N+1);
 }
 
-static inline void mpz_randomsgn(mpz_t dst, gamma_t gamma, const mpz_t src)
+static inline void mpz_randomsgn(mpz_t dst, const mpz_t src)
 {
   uint8_t sign;
   getrandom(&sign, 1, GRND_NONBLOCK);
@@ -100,7 +100,7 @@ void ct_smudge(ct_t ct, gamma_t gamma) {
   mpz_init(smudging);
 
   mpz_urandomb(smudging, gamma.rstate, GAMMA_LOG_SMUDGING);
-  mpz_randomsgn(smudging, gamma, smudging);
+  mpz_randomsgn(smudging, smudging);
   mpz_mul_ui(smudging, smudging, GAMMA_P);
 
   mpz_add(ct[GAMMA_N], ct[GAMMA_N], smudging);
@@ -117,7 +117,7 @@ void regev_encrypt1(ct_t c, gamma_t gamma, gmp_randstate_t rs, sk_t sk, mpz_t m,
   mpz_init(e);
   (*chi)(e, gamma);
   mpz_mul_ui(c[GAMMA_N], e, GAMMA_P);
-  mpz_randomsgn(e, gamma, e);
+  mpz_randomsgn(e, e);
 
   // sample a
   mpz_urandommv(c, rs, GAMMA_LOGQ, GAMMA_N);
@@ -164,7 +164,7 @@ void ct_import(ct_t ct, uint8_t *buf)
 /**
  * Compute the scalar product of a ciphertext (mod q) times a plaintext (mod p).
  */
-void ct_mul(ct_t rop, gamma_t gamma, ct_t a, mpz_t b)
+void ct_mul(ct_t rop, ct_t a, mpz_t b)
 {
   assert(mpz_cmp_ui(b, GAMMA_P) < 0);
 
@@ -174,7 +174,7 @@ void ct_mul(ct_t rop, gamma_t gamma, ct_t a, mpz_t b)
   }
 }
 
-void ct_mul_ui(ct_t rop, gamma_t gamma, ct_t a, uint64_t b)
+void ct_mul_ui(ct_t rop, ct_t a, uint64_t b)
 {
   assert(b < GAMMA_P);
 
@@ -184,7 +184,7 @@ void ct_mul_ui(ct_t rop, gamma_t gamma, ct_t a, uint64_t b)
   }
 }
 
-void ct_add(ct_t rop, gamma_t gamma, ct_t a, ct_t b)
+void ct_add(ct_t rop, ct_t a, ct_t b)
 {
   for (size_t i = 0; i < GAMMA_N+1; i++) {
     mpz_add(rop[i], a[i], b[i]);
@@ -201,7 +201,7 @@ void ct_add(ct_t rop, gamma_t gamma, ct_t a, ct_t b)
   } while(0)
 
 
-void eval_fd(ct_t rop, gamma_t gamma, int cfd, mpz_t coeff[static 1], size_t d)
+void eval_fd(ct_t rop, int cfd, mpz_t coeff[static 1], size_t d)
 {
   ct_t ct;
   ct_init(ct);
@@ -212,8 +212,8 @@ void eval_fd(ct_t rop, gamma_t gamma, int cfd, mpz_t coeff[static 1], size_t d)
 
   for (size_t i = 0; i < d; i++) {
     ct_import(ct, &c8[i * CT_BLOCK]);
-    ct_mul(ct, gamma, ct, coeff[i]);
-    ct_add(rop, gamma, rop, ct);
+    ct_mul(ct, ct, coeff[i]);
+    ct_add(rop, rop, ct);
   }
 
   munmap(c8, length);
@@ -221,15 +221,15 @@ void eval_fd(ct_t rop, gamma_t gamma, int cfd, mpz_t coeff[static 1], size_t d)
 }
 
 
-void eval_poly(ct_t rop, gamma_t gamma, uint8_t *c8, nmod_poly_t p, size_t d)
+void eval_poly(ct_t rop, uint8_t *c8, nmod_poly_t p, size_t d)
 {
   ct_t ct;
   ct_init(ct);
 
   for (size_t i = 0; i < d; i++) {
     ct_import(ct, &c8[i * CT_BLOCK]);
-    ct_mul_ui(ct, gamma, ct, nmod_poly_get_coeff_ui(p, i));
-    ct_add(rop, gamma, rop, ct);
+    ct_mul_ui(ct, ct, nmod_poly_get_coeff_ui(p, i));
+    ct_add(rop, rop, ct);
   }
 
   ct_clear(ct);
