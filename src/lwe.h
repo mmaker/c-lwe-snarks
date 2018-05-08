@@ -136,6 +136,6 @@ static inline void modq(mpz_t a)
   int pos = (GAMMA_LOGQ / 64) ;
   if (a->_mp_size > pos) {
     PTR(a)[pos] &= (1UL << 32) - 1;
+    MPN_NORMALIZE(PTR(a), pos);
   }
-  MPN_NORMALIZE(PTR(a), pos);
 }
