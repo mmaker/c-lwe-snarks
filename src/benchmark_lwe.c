@@ -38,6 +38,7 @@ void benchmark_encrypt()
 
   key_clear(sk);
   mpz_clear(m);
+  ct_clear(c);
   param_clear(&gamma);
 
 }
