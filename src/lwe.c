@@ -124,7 +124,7 @@ void regev_encrypt1(ct_t c, gamma_t gamma, gmp_randstate_t rs, sk_t sk, mpz_t m,
 
   mpz_add_dotp(c[GAMMA_N], gamma.q, sk, c, GAMMA_N);
   mpz_add(c[GAMMA_N], c[GAMMA_N], m);
-  mpz_mod(c[GAMMA_N], c[GAMMA_N], gamma.q);
+  modq(c[GAMMA_N]);
 
   mpz_clear(e);
 }
