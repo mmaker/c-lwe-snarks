@@ -81,7 +81,6 @@ void regev_decrypt(mpz_t m, sk_t sk, ct_t ct);
 void ct_smudge(ct_t ct, gamma_t gamma);
 void ct_add(ct_t rop, ct_t a, ct_t b);
 void ct_mul_ui(ct_t rop, ct_t a, uint64_t b);
-void eval_fd(ct_t rop, int cfd, mpz_t coeff[], size_t d);
 void eval_poly(ct_t rop, uint8_t *c8, nmod_poly_t coeffs, size_t d);
 
 #define ct_clearv(vs, len) do {                     \
@@ -105,10 +104,10 @@ void eval_poly(ct_t rop, uint8_t *c8, nmod_poly_t coeffs, size_t d);
 
 
 #define mpz_urandommv(vs, rstate, bits, len) do {       \
-    for (size_t i = 0; i < len; i++) {                      \
-      mpz_urandomb(vs[i], rstate, bits);              \
-    }                                                       \
-} while (0)
+    for (size_t i = 0; i < len; i++) {                  \
+      mpz_urandomb(vs[i], rstate, bits);                \
+    }                                                   \
+  } while (0)
 
 
 static inline
@@ -145,6 +144,6 @@ static inline void modq(mpz_t a)
   if (SIZ(a) > pos) {
     PTR(a)[pos] &= (1UL << 32) - 1;
     MPN_NORMALIZE(PTR(a), pos);
-    SIZ (a) = pos+1;
+    SIZ(a) = pos+1;
   }
 }

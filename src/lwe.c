@@ -163,22 +163,22 @@ void ct_import(ct_t ct, uint8_t *buf)
 /**
  * Compute the scalar product of a ciphertext (mod q) times a plaintext (mod p).
  */
-void ct_mul(ct_t rop, ct_t a, mpz_t b)
-{
-  assert(mpz_cmp_ui(b, GAMMA_P) < 0);
-
-  for (size_t i = 0; i != GAMMA_N+1; i++) {
-    mpz_mul(rop[i], a[i], b);
-    modq(rop[i]);
-  }
-}
-
 void ct_mul_ui(ct_t rop, ct_t a, uint64_t b)
 {
   assert(b < GAMMA_P);
 
   for (size_t i = 0; i < GAMMA_N+1; i++) {
     mpz_mul_ui(rop[i], a[i], b);
+    modq(rop[i]);
+  }
+}
+
+void ct_addmul_ui(ct_t rop, ct_t a, uint64_t b)
+{
+  assert(b < GAMMA_P);
+
+  for (size_t i = 0; i < GAMMA_N+1; i++) {
+    mpz_addmul_ui(rop[i], a[i], b);
     modq(rop[i]);
   }
 }
@@ -200,25 +200,6 @@ void ct_add(ct_t rop, ct_t a, ct_t b)
   } while(0)
 
 
-void eval_fd(ct_t rop, int cfd, mpz_t coeff[static 1], size_t d)
-{
-  ct_t ct;
-  ct_init(ct);
-
-  const size_t length = d * CT_BLOCK;
-  uint8_t *c8 = mmap(NULL, length, PROT_READ, MAP_PRIVATE, cfd, 0);
-  madvise(c8, length, MADV_SEQUENTIAL);
-
-  for (size_t i = 0; i < d; i++) {
-    ct_import(ct, &c8[i * CT_BLOCK]);
-    ct_mul(ct, ct, coeff[i]);
-    ct_add(rop, rop, ct);
-  }
-
-  munmap(c8, length);
-  ct_clear(ct);
-}
-
 
 void eval_poly(ct_t rop, uint8_t *c8, nmod_poly_t p, size_t d)
 {
@@ -227,8 +208,7 @@ void eval_poly(ct_t rop, uint8_t *c8, nmod_poly_t p, size_t d)
 
   for (size_t i = 0; i < d; i++) {
     ct_import(ct, &c8[i * CT_BLOCK]);
-    ct_mul_ui(ct, ct, nmod_poly_get_coeff_ui(p, i));
-    ct_add(rop, rop, ct);
+    ct_addmul_ui(rop, ct, nmod_poly_get_coeff_ui(p, i));
   }
 
   ct_clear(ct);
