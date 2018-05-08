@@ -84,7 +84,6 @@ static inline void mpz_randomsgn(mpz_t dst, const mpz_t src)
   uint8_t sign;
   getrandom(&sign, 1, GRND_NONBLOCK);
   if (sign & 0x01) {
-    // mpz_sub(dst, gamma.q, src);
     mpz_neg(dst, src);
   }
 }

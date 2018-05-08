@@ -177,6 +177,12 @@ bool verifier(uint8_t *ssp, vrs_t vrs, proof_t pi) {
   mpz_mod_ui(test, test, GAMMA_P);
   if (mpz_cmp(test, b_s)) goto end;
 
+  /* test-error procedure */
+  mpz_dotp(test, pi->b_w, vrs->sk, GAMMA_N);
+  mpz_neg(test, test);
+  mpz_cdiv_q_ui(test, test, GAMMA_P);
+  if (SIZ(test) >= GAMMA_LOG_SMUDGING/8) goto end;
+
   result = true;
 
  end:
