@@ -24,8 +24,8 @@ typedef struct gamma {
 /* must be divisible by 8 */
 #define GAMMA_M (64)
 #define GAMMA_LU 10
-#define GAMMA_LOG_SMUDGING 106
-#define GAMMA_LOG_SIGMA 650
+#define GAMMA_LOG_SMUDGING 600
+#define GAMMA_LOG_SIGMA 556
 #define LOGQ_BYTES 92
 #define LOGP_BYTES 4
 #define CT_BYTES (LOGQ_BYTES * (GAMMA_N+1))

@@ -102,9 +102,9 @@ void ct_smudge(ct_t ct, gamma_t gamma) {
   mpz_t smudging;
   mpz_init(smudging);
 
-  mpz_urandomb(smudging, gamma.rstate, GAMMA_LOG_SMUDGING);
-  mpz_mul_ui(smudging, smudging, GAMMA_P);
+  mpz_urandomb(smudging, gamma.rstate, 550);
   mpz_randomsgn(smudging, gamma, smudging);
+  mpz_mul_ui(smudging, smudging, GAMMA_P);
 
   mpz_add(ct[GAMMA_N], ct[GAMMA_N], smudging);
   mpz_mod(ct[GAMMA_N], ct[GAMMA_N], gamma.q);

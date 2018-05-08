@@ -54,7 +54,7 @@ AC_SUBST([AM_MAKEFLAGS], [--no-print-directory])
 
 AC_ARG_ENABLE(debug,
    AS_HELP_STRING([--enable-debug], [enable debugging, default: no]),
-   CFLAGS+=" -UNDEBUG -O0 -ggdb -fbounds-check -D_FORTIFY_SOURCE=1 -fopenmp",
+   CFLAGS+=" -UNDEBUG -O0 -ggdb -fbounds-check",
    CFLAGS+=" -DNDEBUG -O3 -march=native -fopenmp")
 
 
