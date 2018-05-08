@@ -14,6 +14,24 @@
 #include "ssp.h"
 #include "snark.h"
 
+void proof_init(proof_t pi)
+{
+  ct_init(pi->h);
+  ct_init(pi->hat_h);
+  ct_init(pi->hat_v);
+  ct_init(pi->v_w);
+  ct_init(pi->b_w);
+}
+
+void proof_clear(proof_t pi)
+{
+  ct_clear(pi->h);
+  ct_clear(pi->hat_h);
+  ct_clear(pi->hat_v);
+  ct_clear(pi->v_w);
+  ct_clear(pi->b_w);
+}
+
 void setup(uint8_t *crs, vrs_t vrs, uint8_t *ssp, rng_t rng)
 {
   vrs->alpha = rand_modp();

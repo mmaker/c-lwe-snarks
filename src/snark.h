@@ -20,8 +20,6 @@ struct proof {
 
 typedef struct proof proof_t[1];
 
-
-
 struct vrs {
   uint64_t alpha;
   uint64_t beta;
@@ -31,23 +29,8 @@ struct vrs {
 };
 typedef struct vrs vrs_t[1];
 
-static inline void proof_init(proof_t pi)
-{
-  ct_init(pi->h);
-  ct_init(pi->hat_h);
-  ct_init(pi->hat_v);
-  ct_init(pi->v_w);
-  ct_init(pi->b_w);
-}
-
-static inline void proof_clear(proof_t pi)
-{
-  ct_clear(pi->h);
-  ct_clear(pi->hat_h);
-  ct_clear(pi->hat_v);
-  ct_clear(pi->v_w);
-  ct_clear(pi->b_w);
-}
+void proof_init(proof_t pi);
+void proof_clear(proof_t pi);
 
 void setup(uint8_t *crs, vrs_t vrs, uint8_t *ssp, rng_t rng);
 void prover(proof_t pi, uint8_t *crs, uint8_t *ssp, mpz_t witness, rng_t rng);
