@@ -71,8 +71,6 @@ void prover(proof_t pi, uint8_t *crs, uint8_t *ssp, mpz_t witness, gamma_t gamma
   nmod_poly_init(t, GAMMA_P);
   nmod_poly_t v_i;
   nmod_poly_init(v_i, GAMMA_P);
-  nmod_poly_t v;
-  nmod_poly_init(v, GAMMA_P);
   nmod_poly_t w;
   nmod_poly_init(w, GAMMA_P);
   nmod_poly_t h;
@@ -88,21 +86,14 @@ void prover(proof_t pi, uint8_t *crs, uint8_t *ssp, mpz_t witness, gamma_t gamma
   nmod_poly_import(&t, &ssp[ssp_t_offset], GAMMA_D);
 
   uint64_t delta = rand_modp();
-  nmod_poly_scalar_mul_nmod(v, t, delta);
-  nmod_poly_set(w, v);
+  nmod_poly_scalar_mul_nmod(w, t, delta);
 
   ct_import(pi->b_w, &crs[t_offset]);
   ct_mul_ui(pi->b_w, gamma, pi->b_w, delta);
 
-  // assume l_u = 0
-  nmod_poly_import(&v_i, &ssp[ssp_v_i_offset(0)], GAMMA_D);
-  nmod_poly_add(v, v, v_i);
-
-
   for (size_t i = 1; i < GAMMA_M; i++) {
     if (mpz_tstbit(witness, i-1)) {
       nmod_poly_import(&v_i, &ssp[ssp_v_i_offset(i)], GAMMA_D);
-      nmod_poly_add(v, v, v_i);
       nmod_poly_add(w, w, v_i);
 
       ct_import(ct_v_i, &crs[v_offset(i)]);
@@ -110,19 +101,24 @@ void prover(proof_t pi, uint8_t *crs, uint8_t *ssp, mpz_t witness, gamma_t gamma
     }
   }
 
-  nmod_poly_set(h, v);
+  eval_poly(pi->v_w, gamma, crs+s_offset(0), w, GAMMA_D);
+
+  // Assume l_u = 0 . So v(x) = v_0(x) + w(x).
+  nmod_poly_import(&v_i, &ssp[ssp_v_i_offset(0)], GAMMA_D);
+  nmod_poly_add(w, w, v_i);
+  eval_poly(pi->hat_v, gamma, crs+as_offset(0), w, GAMMA_D);
+
+  nmod_poly_set(h, w);
   nmod_poly_pow(h, h, 2);
   nmod_poly_sub(h, h, one);
   nmod_poly_div(h, h, t);
 
   eval_poly(pi->h, gamma, crs+s_offset(0), h, GAMMA_D);
   eval_poly(pi->hat_h, gamma, crs+as_offset(0), h, GAMMA_D);
-  eval_poly(pi->hat_v, gamma, crs+as_offset(0), v, GAMMA_D);
-  eval_poly(pi->v_w, gamma, crs+s_offset(0), w, GAMMA_D);
+
 
   nmod_poly_clear(h);
   nmod_poly_clear(v_i);
-  nmod_poly_clear(v);
   nmod_poly_clear(w);
   ct_clear(ct_v_i);
 
