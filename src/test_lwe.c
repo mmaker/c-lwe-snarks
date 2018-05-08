@@ -99,6 +99,8 @@ void test_eval()
   const size_t d = 50;
   const char * coeffs_filename = "/tmp/coeffs";
 
+  uint8_t *buf = calloc(1, d * CT_BLOCK);
+  
   for (size_t tries = 0; tries != 10; tries++) {
     mpz_t m[d];
 
@@ -109,7 +111,6 @@ void test_eval()
 
     int cfd = open(coeffs_filename, O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR);
     fail_if_error();
-    uint8_t buf[d * CT_BLOCK];
 
     for(size_t i = 0; i != d; i++) {
       mpz_init(m[i]);
@@ -154,6 +155,7 @@ void test_eval()
     nmod_poly_clear(coeffs);
   }
 
+  free(buf);
   teardown();
 }
 
