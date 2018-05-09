@@ -18,7 +18,6 @@
 #include "lwe.h"
 #include "snark.h"
 #include "ssp.h"
-#include "tests.h"
 #include "timeit.h"
 
 
