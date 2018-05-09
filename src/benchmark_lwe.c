@@ -27,13 +27,15 @@ void benchmark_encrypt()
   INIT_TIMEIT();
   for (size_t i = 0; i < 1e4; i++) {
     mpz_set_ui(m, rand_modp());
+    START_TIMEIT();
     regev_encrypt(c, rng, sk, m);
+    END_TIMEIT();
+    printf("encryption\t" TIMEIT_FORMAT "\n", GET_TIMEIT());
 
     START_TIMEIT();
     regev_decrypt(m, sk, c);
     END_TIMEIT();
-
-    printf(TIMEIT_FORMAT "\n", GET_TIMEIT());
+    printf("decryption\t" TIMEIT_FORMAT "\n", GET_TIMEIT());
   }
 
   key_clear(sk);
