@@ -1,0 +1,11 @@
+This library implements zero-knowledge on SNARKs.
+
+The noisy nature of LWE encryptions make their employment on SNARKs not as
+elegant as previous implementations (so is Mangiafuoco in «Le avventure di
+Pinocchio».
+Yet, this project was moved by compassion for zero-knowledge proofs, and their
+survival after the advent of quantum computers.
+
+
+This library does not make any guarantees about constant-time operations, memory
+access patterns, or resistance to side-channel attacks.
