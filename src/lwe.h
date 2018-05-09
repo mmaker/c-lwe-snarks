@@ -19,7 +19,7 @@
 #define GAMMA_LOGQ 736
 #define GAMMA_P 0xfffffffbUL
 /* must be divisible by 8 */
-#define GAMMA_M (64)
+#define GAMMA_M (21845)
 #define GAMMA_LU 10
 #define GAMMA_LOG_SMUDGING 640
 #define GAMMA_LOG_SIGMA 556
