@@ -16,8 +16,8 @@ void mpz_entropy_init();
 #include <sys/random.h>
 
 #else
-#include <linux/random.h>
 #include <sys/syscall.h>
+#include <linux/random.h>
 
 static inline ssize_t
 getrandom(void *buffer, size_t length, unsigned int flags)

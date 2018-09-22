@@ -1,11 +1,11 @@
+#include "config.h"
+
 #include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/random.h>
 
 #include <gmp.h>
 #include <flint/nmod_poly.h>

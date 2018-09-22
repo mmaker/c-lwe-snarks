@@ -1,16 +1,17 @@
+#include "config.h"
+
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
-#include <sys/random.h>
 #include <unistd.h>
 #include <strings.h>
 
 #include <gmp.h>
 #include <flint/nmod_poly.h>
 
+#include "entropy.h"
 #include "lwe.h"
 #include "ssp.h"
 

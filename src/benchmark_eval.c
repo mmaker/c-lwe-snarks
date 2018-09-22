@@ -6,14 +6,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/mman.h>
-#include <sys/random.h>
-#include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
 
 #include <gmp.h>
 #include <flint/nmod_poly.h>
 
+#include "entropy.h"
 #include "lwe.h"
 #include "timeit.h"
 
