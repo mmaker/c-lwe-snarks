@@ -1,11 +1,12 @@
 #pragma once
 #include <assert.h>
 #include <stdint.h>
-#include <sys/random.h>
 
 #include <flint/nmod_poly.h>
 #include <gmp.h>
 
+
+#include "entropy.h"
 
 /* Parameter generation */
 
@@ -137,9 +138,7 @@ uint64_t rand_modp()
   } while (0)
 
 
-/**
- *
- */
+#if GAMMA_LOGQ == 736
 static inline void modq(mpz_t a)
 {
   assert(SIZ(a) >= 0);
@@ -151,3 +150,6 @@ static inline void modq(mpz_t a)
     SIZ(a) = pos;
   }
 }
+#else
+#error "Not implemented"
+#endif

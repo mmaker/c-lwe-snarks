@@ -10,12 +10,12 @@
 #include <strings.h>
 #include <unistd.h>
 #include <sys/mman.h>
-#include <sys/random.h>
 
 #include <flint/nmod_poly.h>
 #include <gmp.h>
 
 #include "lwe.h"
+#include "entropy.h"
 
 void rng_init(rng_t rs, uint8_t *rseed)
 {

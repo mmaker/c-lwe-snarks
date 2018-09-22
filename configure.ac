@@ -32,6 +32,8 @@ AC_CHECK_SIZEOF(mp_limb_t, 8, [#include <gmp.h>])
 AC_CHECK_SIZEOF(uint32_t, 4, [#include <stdint.h>])
 AC_CHECK_SIZEOF(unsigned long long, 8, [])
 
+AC_CHECK_HEADERS([sys/random.h])
+
 # Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_SIZE_T
 
