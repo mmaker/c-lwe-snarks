@@ -26,6 +26,9 @@ AC_CHECK_LIB(flint, nmod_poly_init, ,
 AC_USE_SYSTEM_EXTENSIONS
 AC_DEFINE([_DEFAULT_SOURCE], [1], [Enable _DEFAULT_SOURCE extensions (like for madivise(2)])
 
+
+AC_DEFINE_UNQUOTED([BASEDIR], ["$srcdir/"], [Source directory])
+
 # Checks for header files.
 AC_CHECK_HEADERS([limits.h stdint.h stdlib.h string.h unistd.h])
 AC_CHECK_SIZEOF(mp_limb_t, 8, [#include <gmp.h>])

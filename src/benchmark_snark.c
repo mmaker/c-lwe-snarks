@@ -20,8 +20,8 @@
 
 
 
-#define CRS_FILENAME "/home/maker/crs"
-#define SSP_FILENAME "/home/maker/ssp"
+#define CRS_FILENAME (BASEDIR "crs.mfuoco")
+#define SSP_FILENAME (BASEDIR "ssp.mfuoco")
 
 #include <assert.h>
 bool benchmark_snark()

@@ -17,7 +17,7 @@
 #include "timeit.h"
 
 
-#define COEFFS_FILENAME "/home/maker/coeffs"
+#define COEFFS_FILENAME (BASEDIR "coeffs")
 
 #define fail_if_error() do {                    \
     if (errno > 0) {                            \
