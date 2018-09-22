@@ -2,11 +2,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#include <sys/random.h>
-#include <sys/syscall.h>
-
 #include <gmp.h>
 
+#include "entropy.h"
 #include "lwe.h"
 #include "timeit.h"
 
