@@ -12,7 +12,7 @@ extern unsigned long int _rseed;
 void mpz_entropy_init();
 
 
-#if HAVE_SYS_RANDOM_H
+#ifdef HAVE_SYS_RANDOM_H
 #include <sys/random.h>
 
 #else
