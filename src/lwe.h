@@ -5,6 +5,7 @@
 #include <flint/nmod_poly.h>
 #include <gmp.h>
 
+#include "gmp-impl.h"
 
 #include "entropy.h"
 
@@ -31,19 +32,6 @@
    Depending on the device it will need to be a power of 2 divisible by sizeof((void *)).
 */
 #define CT_BLOCK CT_BYTES //(1 << 18)
-
-
-typedef uint8_t rseed_t[32];
-typedef gmp_randstate_t rng_t;
-
-void rng_init(rng_t rs, uint8_t *rseed);
-void rng_clear(rng_t rs);
-#define RNG_INIT(rs) do {                              \
-    rseed_t rseed;                                      \
-    getrandom(&rseed, sizeof(rseed_t), GRND_NONBLOCK);  \
-    rng_init(rs, rseed);                                \
-  } while(0)
-
 
 /* secret key generation */
 typedef mpz_t sk_t[GAMMA_N];
@@ -123,19 +111,6 @@ uint64_t rand_modp()
   return rop % GAMMA_P;
 }
 
-
-#define SIZ(x) ((x)->_mp_size)
-#define PTR(x) ((x)->_mp_d)
-
-#define MPN_NORMALIZE(DST, NLIMBS)                                      \
-  do {									\
-    while (1)								\
-      {									\
-	if ((DST)[(NLIMBS) - 1] != 0)					\
-	  break;							\
-	(NLIMBS)--;							\
-      }									\
-  } while (0)
 
 
 #if GAMMA_LOGQ == 736
