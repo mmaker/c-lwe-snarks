@@ -21,6 +21,8 @@ AC_CHECK_LIB(gmp, __gmpz_init, ,
              [AC_MSG_ERROR([GNU MP not found, see https://gmplib.org/])])
 AC_CHECK_LIB(flint, nmod_poly_init, ,
              [AC_MSG_ERROR([FLINT not found, see https://www.flintlib.org/])])
+# AC_CHECK_LIB(crypto, CRYPTO_new_ex_data, ,
+#              [AC_MSG_ERROR([OpenSSL not found, please install libssl-dev.])])
 
 # have _GNU_SOURCE defined aroud.
 AC_USE_SYSTEM_EXTENSIONS
