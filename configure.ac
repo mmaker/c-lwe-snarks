@@ -64,6 +64,7 @@ AC_ARG_ENABLE(debug,
 
 
 AC_DEFINE([AES_NI], [1], [Use aes-ni])
+AM_CONDITIONAL([AES_NI], [true])
 
 #AC_ARG_VAR([ss_base], [ss base])
 #AS_IF([test "x$ss_base" = x], [ss_base="1"])

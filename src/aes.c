@@ -1,34 +1,14 @@
 #include <stdio.h>
-#include <assert.h>
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
 
-#ifdef AESNI
-#include <wmmintrin.h>
-
-typedef struct aes_key {
-    uint8_t rkeys_buf[15 * sizeof(__m128i) + (sizeof(__m128i) - 1)];
-    __m128i *rkeys;
-} aes_key_t;
-#else
-#include <openssl/aes.h>
-
-typedef AES_KEY aes_key_t;
-#endif
-
-
-struct aesctr {
-  uint64_t nonce;
-  aes_key_t *key;
-};
-
-typedef struct aesctr aesctr_t;
+#include "aes.h"
 
 #ifdef AESNI
 #define MKRKEY256(rkeys, i, shuffle, rcon)	do {    \
-    __m128i _s = rkeys[i - 2];                          \
-    __m128i _t = rkeys[i - 1];                          \
+    __m128i _s = rkeys[i-2];                          \
+    __m128i _t = rkeys[i-1];                          \
     _s = _mm_xor_si128(_s, _mm_slli_si128(_s, 4));      \
     _s = _mm_xor_si128(_s, _mm_slli_si128(_s, 8));      \
     _t = _mm_aeskeygenassist_si128(_t, rcon);           \
@@ -117,8 +97,7 @@ aesctr_t *aesctr_init(const uint8_t *key, const uint64_t nonce)
   return stream;
 }
 
-static void
-aesctr_prg(aesctr_t *stream, uint8_t *outbuf, size_t ctr_start, size_t ctr_end)
+void aesctr_prg(aesctr_t *stream, uint8_t *outbuf, size_t ctr_start, size_t ctr_end)
 {
   uint8_t pblk[16];
   size_t pos;
@@ -137,8 +116,7 @@ aesctr_prg(aesctr_t *stream, uint8_t *outbuf, size_t ctr_start, size_t ctr_end)
   }
 }
 
-static void
-aesctr_clear(aesctr_t *stream)
+void aesctr_clear(aesctr_t *stream)
 {
   if (stream == NULL)
     return;
@@ -153,26 +131,4 @@ aesctr_clear(aesctr_t *stream)
 
   memset(stream, 0x0, sizeof(aesctr_t));
   free(stream);
-}
-
-
-#include <unistd.h>
-#include "entropy.h"
-
-int main(int argc, char **argv)
-{
-  uint8_t key_enc[32];
-  uint8_t encd_buf[16 * 4];
-
-  getrandom(key_enc, 32, GRND_NONBLOCK);
-
-  aesctr_t *stream = aesctr_init(key_enc, 0xfffffffffffffUL);
-  if (stream) {
-    aesctr_prg(stream, encd_buf, 0, 3);
-    aesctr_clear(stream);
-    write(2, encd_buf, 16 * 3);
-    return EXIT_SUCCESS;
-  } else {
-    return EXIT_FAILURE;
-  }
 }
