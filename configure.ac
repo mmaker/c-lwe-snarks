@@ -63,6 +63,8 @@ AC_ARG_ENABLE(debug,
    CFLAGS+=" -DNDEBUG -O3 -march=native -fopenmp")
 
 
+AC_DEFINE([AES_NI], [1], [Use aes-ni])
+
 #AC_ARG_VAR([ss_base], [ss base])
 #AS_IF([test "x$ss_base" = x], [ss_base="1"])
 #AC_DEFINE_UNQUOTED([SS_BASE], [$ss_base], [log of secret shares representation, default: 1.])
