@@ -52,8 +52,8 @@ void ct_clear(ct_t ct);
 void ct_export(uint8_t *buf, ct_t ct);
 void ct_import(ct_t ct, uint8_t *buf);
 
-void decompress_encryption(ct_t c, gmp_randstate_t rs, mpz_t b);
-void regev_encrypt2(ct_t c, gmp_randstate_t rs, sk_t sk, mpz_t m, void (*chi)(mpz_t, gmp_randstate_t));
+void decompress_encryption(ct_t c, rng_t rs, mpz_t b);
+void regev_encrypt2(ct_t c, rng_t rs, sk_t sk, mpz_t m, void (*chi)(mpz_t, rng_t));
 
 void mpz_add_dotp(mpz_t rop, mpz_t a[], mpz_t b[], size_t len);
 
@@ -64,7 +64,7 @@ void mpz_dotp(mpz_t rop, mpz_t a[], mpz_t b[], size_t len) {
 }
 
 static inline
-void regev_encrypt(ct_t c, gmp_randstate_t rs, sk_t sk, mpz_t m)
+void regev_encrypt(ct_t c, rng_t rs, sk_t sk, mpz_t m)
 {
   regev_encrypt2(c, rs, sk, m, errdist_uniform);
 }
@@ -95,12 +95,6 @@ void eval_poly(ct_t rop, uint8_t *c8, nmod_poly_t coeffs, size_t d);
     }                                           \
   } while (0)
 
-
-#define mpz_urandommv(vs, rstate, bits, len) do {       \
-    for (size_t i = 0; i < len; i++) {                  \
-      mpz_urandomb(vs[i], rstate, bits);                \
-    }                                                   \
-  } while (0)
 
 
 static inline

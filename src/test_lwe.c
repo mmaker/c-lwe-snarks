@@ -199,7 +199,7 @@ void test_modq()
   modq(b);
 
   for (size_t tries = 0; tries < 100; tries++) {
-    mpz_urandomb(a, rng, GAMMA_LOGQ+100);
+    mpz2_urandomb(a, rng, GAMMA_LOGQ+128);
     mpz_set(b, a);
 
     modq(a);

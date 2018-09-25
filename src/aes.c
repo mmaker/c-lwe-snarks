@@ -17,7 +17,7 @@
   } while (0)
 
 static inline void
-aes_encrypt_block_aesni(const uint8_t *in, uint8_t *out, aes_key_t *key)
+aes_encrypt_block_aesni(const uint8_t *in, void *out, aes_key_t *key)
 {
     const __m128i *rkeys = key->rkeys;
     const size_t nr = 14;
@@ -44,15 +44,12 @@ aes_encrypt_block_aesni(const uint8_t *in, uint8_t *out, aes_key_t *key)
 }
 #endif
 
-aesctr_t *aesctr_init(const uint8_t *key, const uint64_t nonce)
+void aesctr_init(aesctr_ptr stream, const uint8_t *key, const uint64_t nonce)
 {
-  aesctr_t *stream;
-  stream = malloc(sizeof(aesctr_t));
-  if (!stream) return NULL;
+  stream->ctr = 0;
   stream->key = malloc(sizeof(aes_key_t));
   if (!stream->key) {
-    free(stream);
-    return NULL;
+    perror("Failed malloc");
   }
 
 #ifdef AESNI
@@ -93,42 +90,56 @@ aesctr_t *aesctr_init(const uint8_t *key, const uint64_t nonce)
   AES_set_encrypt_key(key, 256, stream->key);
 #endif
   stream->nonce = nonce;
-
-  return stream;
 }
 
-void aesctr_prg(aesctr_t *stream, uint8_t *outbuf, size_t ctr_start, size_t ctr_end)
-{
-  uint8_t pblk[16];
-  size_t pos;
-
-  memcpy(pblk, &stream->nonce, 8);
-
-  for (pos = ctr_start; pos < ctr_end; pos++) {
-    memcpy(pblk + 8, &pos, 8);
 
 #ifdef AESNI
-    aes_encrypt_block_aesni(pblk, outbuf, stream->key);
+#define aes_encrypt_block aes_encrypt_block_aesni
 #else
-    AES_encrypt(pblk, outbuf, stream->key);
+#define aes_encrypt_block AES_encrypt
 #endif
-    outbuf += 16;
+
+void aesctr_prg(aesctr_ptr stream, void *_out, size_t bytes)
+{
+  uint8_t * out = _out;
+  uint8_t block[16];
+  size_t pos;
+  memcpy(block, &stream->nonce, 8);
+
+  size_t blocks = bytes/16;
+  if (blocks > 0) {
+    /* bytes that cannot be transferred block-wise */
+    bytes -= blocks*16;
+
+    do {
+      memcpy(block + 8, &stream->ctr, 8);
+      aes_encrypt_block(block, out, stream->key);
+      out += 16;
+      --blocks;
+      ++stream->ctr;
+    } while (blocks != 0);
   }
+
+  for (; blocks != 0; ++stream->ctr) {
+  }
+
+  if (bytes) {
+    uint8_t ct[16];
+    memcpy(block + 8, &pos, 8);
+    aes_encrypt_block(block, ct, stream->key);
+    memcpy(out, ct, bytes);
+    ++stream->ctr;
+  }
+
 }
 
-void aesctr_clear(aesctr_t *stream)
+void aesctr_clear(aesctr_ptr stream)
 {
   if (stream == NULL)
     return;
 
-#ifdef AESNI
   memset(stream->key, 0x0, sizeof(aes_key_t));
-#else
-  memset(stream->key, 0x0, sizeof(AES_KEY));
-#endif
-
   free(stream->key);
-
   memset(stream, 0x0, sizeof(aesctr_t));
-  free(stream);
+
 }

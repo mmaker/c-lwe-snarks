@@ -8,8 +8,11 @@
 #define SIZ(x) ((x)->_mp_size)
 #define PTR(x) ((x)->_mp_d)
 #define ALLOC(x) ((x)->_mp_alloc)
+/* bit count to limb count, rounding up */
+#define BITS_TO_LIMBS(n)  (((n) + (GMP_NUMB_BITS - 1)) / GMP_NUMB_BITS)
 
-#define UNLIKELY(cond)                 __GMP_UNLIKELY(cond)
+
+#define UNLIKELY(cond)   __GMP_UNLIKELY(cond)
 #define MPN_NORMALIZE(DST, NLIMBS)                                      \
   do {									\
     while (1)								\

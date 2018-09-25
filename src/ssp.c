@@ -40,7 +40,7 @@ void random_ssp(mpz_t input, uint8_t *circuit, rng_t rng)
   const size_t buflen = sizeof(buf);
 
   // create a valid inut
-  mpz_urandomb(input, rng, GAMMA_M);
+  mpz2_urandomb(input, rng, GAMMA_M);
 
   nmod_poly_t one;
   nmod_poly_init(one, GAMMA_P);
