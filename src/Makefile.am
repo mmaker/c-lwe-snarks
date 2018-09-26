@@ -1,11 +1,12 @@
 check_PROGRAMS = test_lwe test_snark test_ssp test_aes
 TESTS = $(check_PROGRAMS)
 
-if AES_NI
-LDADD = -lcrypto
+if AESNI
+CFLAGS = -maes
 else
-AM_CFLAGS = $(CFLAGS) -maes
+LDADD = -lcrypto
 endif
+
 
 AES = aes.c aes.h
 ENTROPY = entropy.c entropy.h $(AES)

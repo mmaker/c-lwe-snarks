@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
@@ -82,8 +84,7 @@ void aesctr_init(aesctr_ptr stream, const uint8_t *key, const uint64_t nonce)
   if (!stream) {
     memset(kexp, 0x0, sizeof(aes_key_t));
     free(kexp);
-
-    return 0;
+    return;
   }
 #else
   // XXX: AES_set_encrypt_key returns something on error.

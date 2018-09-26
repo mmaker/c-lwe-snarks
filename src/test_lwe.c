@@ -98,7 +98,7 @@ void test_eval()
 {
   setup();
   const size_t d = 50;
-  const char * coeffs_filename = "/tmp/coeffs";
+  const char * coeffs_filename = BASEDIR "coeffs";
 
   uint8_t *buf = calloc(1, d * CT_BLOCK);
 
@@ -173,7 +173,7 @@ void test_smudging()
     mpz_set_ui(m, rand_modp());
 
     regev_encrypt(ct, rng, sk, m);
-    ct_smudge(ct, rng);
+    ct_smudge(ct);
 
     regev_decrypt(_m, sk, ct);
     assert(!mpz_cmp(m, _m));
@@ -192,7 +192,6 @@ void test_modq()
   mpz_t a, b, q;
   mpz_inits(a, b, q, NULL);
   mpz_ui_pow_ui(q, 2, GAMMA_LOGQ);
-
 
   /* it should work even on unitialized data */
   modq(a);

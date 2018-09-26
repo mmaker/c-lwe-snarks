@@ -71,7 +71,7 @@ void regev_encrypt(ct_t c, rng_t rs, sk_t sk, mpz_t m)
 
 
 void regev_decrypt(mpz_t m, sk_t sk, ct_t ct);
-void ct_smudge(ct_t ct, rng_t rng);
+void ct_smudge(ct_t ct);
 void ct_add(ct_t rop, ct_t a, ct_t b);
 void ct_mul_ui(ct_t rop, ct_t a, uint64_t b);
 void eval_poly(ct_t rop, uint8_t *c8, nmod_poly_t coeffs, size_t d);

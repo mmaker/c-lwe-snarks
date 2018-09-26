@@ -54,8 +54,8 @@ AM_INIT_AUTOMAKE
 CFLAGS+=" -pedantic -Wall -std=c11 "
 
 # Shut up automake
-AM_SILENT_RULES([yes])
-AC_SUBST([AM_MAKEFLAGS], [--no-print-directory])
+#AM_SILENT_RULES([yes])
+#AC_SUBST([AM_MAKEFLAGS], [--no-print-directory])
 
 # Adding package options
 
@@ -65,8 +65,8 @@ AC_ARG_ENABLE(debug,
    CFLAGS+=" -DNDEBUG -O3 -march=native -fopenmp")
 
 
-AC_DEFINE([AES_NI], [1], [Use aes-ni])
-AM_CONDITIONAL([AES_NI], [true])
+AC_DEFINE([AESNI], [1], [Use aes-ni])
+AM_CONDITIONAL([AESNI], [true])
 
 #AC_ARG_VAR([ss_base], [ss base])
 #AS_IF([test "x$ss_base" = x], [ss_base="1"])

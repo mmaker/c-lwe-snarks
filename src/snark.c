@@ -144,11 +144,11 @@ void prover(proof_t pi, crs_t crs, ssp_t ssp, mpz_t witness, rng_t rng)
   ct_clear(ct_v_i);
 
   /* smudge proof terms */
-  ct_smudge(pi->h, rng);
-  ct_smudge(pi->hat_h, rng);
-  ct_smudge(pi->hat_v, rng);
-  ct_smudge(pi->v_w, rng);
-  ct_smudge(pi->v_w, rng);
+  ct_smudge(pi->h);
+  ct_smudge(pi->hat_h);
+  ct_smudge(pi->hat_v);
+  ct_smudge(pi->v_w);
+  ct_smudge(pi->v_w);
 }
 
 bool verifier(ssp_t ssp, vrs_t vrs, proof_t pi) {

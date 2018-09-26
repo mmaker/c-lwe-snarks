@@ -62,11 +62,11 @@ void errdist_uniform(mpz_t e)
   mpz2_urandomb2(e, GAMMA_LOG_SIGMA+3);
 }
 
-void ct_smudge(ct_t ct, rng_t rng) {
+void ct_smudge(ct_t ct) {
   mpz_t smudging;
   mpz_init(smudging);
 
-  mpz2_urandomb(smudging, rng, GAMMA_LOG_SMUDGING);
+  mpz2_urandomb2(smudging, GAMMA_LOG_SMUDGING);
   mpz_randomsgn(smudging, smudging);
   mpz_mul_ui(smudging, smudging, GAMMA_P);
 

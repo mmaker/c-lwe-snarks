@@ -28,9 +28,6 @@ getrandom(void *buffer, size_t length, unsigned int flags)
 
 #endif
 
-extern gmp_randstate_t _rstate;
-extern unsigned long int _rseed;
-
 /* a rseed_t is 32 bytes for the key + 8 bytes for the key */
 typedef uint8_t rseed_t[32 + 8];
 typedef aesctr_t rng_t[1];
