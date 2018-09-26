@@ -34,6 +34,23 @@ void mpz2_urandomb(mpz_ptr rop, rng_t prg, size_t nbits)
   SIZ(rop) = limbs;
 }
 
+void mpz2_urandomb2(mpz_ptr rop, size_t nbits)
+{
+  // Let's support this to byte-level please.
+  //  assert(nbits % 8 == 0);
+
+  mp_ptr rp;
+  size_t limbs = BITS_TO_LIMBS(nbits);
+
+  rp = MPZ_NEWALLOC(rop, limbs);
+
+  getrandom(rp, LIMBS_TO_BYTES(limbs), GRND_NONBLOCK);
+  rp[limbs-1] &= (0xFFFFFFFFFFFFFFFFUL >> (limbs * 64 - nbits));
+  MPN_NORMALIZE(rp, limbs);
+  SIZ(rop) = limbs;
+}
+
+
 
 void rng_init(rng_t prg, uint8_t *rseed)
 {

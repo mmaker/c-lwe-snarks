@@ -49,6 +49,7 @@ void mpz_entropy_init();
 
 
 void mpz2_urandomb(mpz_ptr rop, rng_t prg, size_t nbits);
+void mpz2_urandomb2(mpz_ptr rop, size_t nbits);
 
 #define mpz2_urandommv(vs, rstate, bits, len) do {       \
     for (size_t i = 0; i < len; i++) {                  \

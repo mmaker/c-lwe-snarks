@@ -120,9 +120,6 @@ void aesctr_prg(aesctr_ptr stream, void *_out, size_t bytes)
     } while (blocks != 0);
   }
 
-  for (; blocks != 0; ++stream->ctr) {
-  }
-
   if (bytes) {
     uint8_t ct[16];
     memcpy(block + 8, &pos, 8);

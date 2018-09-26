@@ -41,7 +41,7 @@ void key_clear(sk_t sk);
 
 
 /* error distributions */
-void errdist_uniform(mpz_t e, rng_t rng);
+void errdist_uniform(mpz_t e);
 
 /* ciphertext */
 typedef mpz_t ct_t[GAMMA_N+1];
@@ -53,7 +53,7 @@ void ct_export(uint8_t *buf, ct_t ct);
 void ct_import(ct_t ct, uint8_t *buf);
 
 void decompress_encryption(ct_t c, rng_t rs, mpz_t b);
-void regev_encrypt2(ct_t c, rng_t rs, sk_t sk, mpz_t m, void (*chi)(mpz_t, rng_t));
+void regev_encrypt2(ct_t c, rng_t rs, sk_t sk, mpz_t m, void (*chi)(mpz_t));
 
 void mpz_add_dotp(mpz_t rop, mpz_t a[], mpz_t b[], size_t len);
 

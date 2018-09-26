@@ -57,9 +57,9 @@ static inline void mpz_randomsgn(mpz_t dst, const mpz_t src)
   }
 }
 
-void errdist_uniform(mpz_t e, rng_t rstate)
+void errdist_uniform(mpz_t e)
 {
-  mpz2_urandomb(e, rstate, GAMMA_LOG_SIGMA+3);
+  mpz2_urandomb2(e, GAMMA_LOG_SIGMA+3);
 }
 
 void ct_smudge(ct_t ct, rng_t rng) {
@@ -75,14 +75,14 @@ void ct_smudge(ct_t ct, rng_t rng) {
   mpz_clear(smudging);
 }
 
-void regev_encrypt2(ct_t c, rng_t rs, sk_t sk, mpz_t m, void (*chi)(mpz_t, rng_t))
+void regev_encrypt2(ct_t c, rng_t rs, sk_t sk, mpz_t m, void (*chi)(mpz_t))
 {
   assert(mpz_cmp_ui(m, GAMMA_P) < 0);
 
   // sample the error
   mpz_t e;
   mpz_init(e);
-  (*chi)(e, rs);
+  (*chi)(e);
   mpz_mul_ui(c[GAMMA_N], e, GAMMA_P);
   mpz_randomsgn(e, e);
 
