@@ -37,7 +37,7 @@ void setup(uint8_t *crs, vrs_t vrs, ssp_t ssp, rng_t rng)
   vrs->alpha = rand_modp();
   vrs->beta = rand_modp();
   vrs->s = rand_modp();
-  key_gen(vrs->sk, rng);
+  key_gen(vrs->sk);
 
   ct_t ct;
   ct_init(ct);
@@ -107,7 +107,7 @@ void prover(proof_t pi, crs_t crs, ssp_t ssp, mpz_t witness, rng_t rng)
   uint64_t delta = rand_modp();
   nmod_poly_scalar_mul_nmod(w, t, delta);
 
-  ct_import(pi->b_w, CRS_T_OFFSET(crs));
+  ct_import(pi->b_w, rng, CRS_T_OFFSET(crs));
   ct_mul_ui(pi->b_w, pi->b_w, delta);
 
   for (size_t i = 1; i < GAMMA_M; i++) {
@@ -115,25 +115,25 @@ void prover(proof_t pi, crs_t crs, ssp_t ssp, mpz_t witness, rng_t rng)
       nmod_poly_import(&v_i, &ssp[ssp_v_offset(i)], GAMMA_D);
       nmod_poly_add(w, w, v_i);
 
-      ct_import(ct_v_i, CRS_V_OFFSET(crs, i));
+      ct_import(ct_v_i, rng, CRS_V_OFFSET(crs, i));
       ct_add(pi->b_w, pi->b_w, ct_v_i);
     }
   }
 
-  eval_poly(pi->v_w, CRS_S_OFFSET(crs, 0), w, GAMMA_D);
+  eval_poly(pi->v_w, rng, CRS_S_OFFSET(crs, 0), w, GAMMA_D);
 
   // Assume l_u = 0 . So v(x) = v_0(x) + w(x).
   nmod_poly_import(&v_i, &ssp[ssp_v_offset(0)], GAMMA_D);
   nmod_poly_add(w, w, v_i);
-  eval_poly(pi->hat_v, CRS_AS_OFFSET(crs, 0), w, GAMMA_D);
+  eval_poly(pi->hat_v, rng, CRS_AS_OFFSET(crs, 0), w, GAMMA_D);
 
   nmod_poly_set(h, w);
   nmod_poly_pow(h, h, 2);
   nmod_poly_sub(h, h, one);
   nmod_poly_div(h, h, t);
 
-  eval_poly(pi->h, CRS_S_OFFSET(crs, 0), h, GAMMA_D);
-  eval_poly(pi->hat_h, CRS_AS_OFFSET(crs, 0), h, GAMMA_D);
+  eval_poly(pi->h, rng, CRS_S_OFFSET(crs, 0), h, GAMMA_D);
+  eval_poly(pi->hat_h, rng, CRS_AS_OFFSET(crs, 0), h, GAMMA_D);
 
 
   nmod_poly_clear(h);

@@ -16,7 +16,7 @@ void benchmark_encrypt()
   RNG_INIT(rng);
 
   sk_t sk;
-  key_gen(sk, rng);
+  key_gen(sk);
 
   mpz_t m;
   mpz_init(m);

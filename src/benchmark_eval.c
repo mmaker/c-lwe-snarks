@@ -32,7 +32,7 @@ void benchmark_eval()
   rng_t rng;
   RNG_INIT(rng);
   sk_t sk;
-  key_gen(sk, rng);
+  key_gen(sk);
 
   mpz_t m[GAMMA_D];
   ct_t ct;
@@ -68,7 +68,7 @@ void benchmark_eval()
   fail_if_error();
   INIT_TIMEIT();
   START_TIMEIT();
-  eval_poly(evaluated, c8, coeffs, GAMMA_D);
+  eval_poly(evaluated, rng, c8, coeffs, GAMMA_D);
   END_TIMEIT();
 
   printf(TIMEIT_FORMAT "\n", GET_TIMEIT());

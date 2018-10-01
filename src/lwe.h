@@ -27,16 +27,16 @@
 #define GAMMA_LOG_SIGMA 556
 #define LOGQ_BYTES 92UL
 #define LOGP_BYTES 4
-#define CT_BYTES (LOGQ_BYTES * (GAMMA_N+1))
+#define CT_BYTES (LOGQ_BYTES)
 /* CT_BLOCK is the block to be written on disk.
    Depending on the device it will need to be a power of 2 divisible by sizeof((void *)).
 */
-#define CT_BLOCK CT_BYTES //(1 << 18)
+#define CT_BLOCK (CT_BYTES) //(1 << 18)
 
 /* secret key generation */
 typedef mpz_t sk_t[GAMMA_N];
 
-void key_gen(sk_t sk, rng_t rng);
+void key_gen(sk_t sk);
 void key_clear(sk_t sk);
 
 
@@ -50,7 +50,7 @@ void ct_init(ct_t ct);
 void ct_clear(ct_t ct);
 
 void ct_export(uint8_t *buf, ct_t ct);
-void ct_import(ct_t ct, uint8_t *buf);
+void ct_import(ct_t ct, rng_t rng, uint8_t *buf);
 
 void decompress_encryption(ct_t c, rng_t rs, mpz_t b);
 void regev_encrypt2(ct_t c, rng_t rs, sk_t sk, mpz_t m, void (*chi)(mpz_t));
@@ -74,7 +74,7 @@ void regev_decrypt(mpz_t m, sk_t sk, ct_t ct);
 void ct_smudge(ct_t ct);
 void ct_add(ct_t rop, ct_t a, ct_t b);
 void ct_mul_ui(ct_t rop, ct_t a, uint64_t b);
-void eval_poly(ct_t rop, uint8_t *c8, nmod_poly_t coeffs, size_t d);
+void eval_poly(ct_t rop, rng_t rng, uint8_t *c8, nmod_poly_t coeffs, size_t d);
 
 #define ct_clearv(vs, len) do {                     \
     for (size_t i = 0; i < len; i++) {              \

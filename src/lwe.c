@@ -27,10 +27,10 @@ void mpz_add_dotp(mpz_t rop,
   modq(rop);
 }
 
-void key_gen(sk_t sk, rng_t rng)
+void key_gen(sk_t sk)
 {
   mpz_initv(sk, GAMMA_N);
-  mpz2_urandommv(sk, rng, GAMMA_LOGQ, GAMMA_N);
+  mpz2_urandombv2(sk, GAMMA_LOGQ, GAMMA_N);
 }
 
 void key_clear(sk_t sk)
@@ -115,17 +115,14 @@ void regev_decrypt(mpz_t m, sk_t sk, ct_t ct)
 void ct_export(uint8_t *buf, ct_t ct)
 {
   bzero(buf, CT_BLOCK);
-  for (size_t i = 0; i < GAMMA_N+1; i++) {
-    mpz_export(&buf[i*LOGQ_BYTES], NULL, -1, sizeof(uint8_t), -1, 0, ct[i]);
-  }
+  mpz_export(buf, NULL, -1, sizeof(uint8_t), -1, 0, ct[GAMMA_N]);
 }
 
 
-void ct_import(ct_t ct, uint8_t *buf)
+void ct_import(ct_t ct, rng_t rng, uint8_t *buf)
 {
-  for (size_t i = 0; i < GAMMA_N+1; i++) {
-    mpz_import(ct[i], LOGQ_BYTES, -1, sizeof(uint8_t), -1, 0, &buf[i*LOGQ_BYTES]);
-  }
+  mpz2_urandommv(ct, rng, GAMMA_LOGQ, GAMMA_N);
+  mpz_import(ct[GAMMA_N], LOGQ_BYTES, -1, sizeof(uint8_t), -1, 0, buf);
 }
 
 /**
@@ -135,7 +132,7 @@ void ct_mul_ui(ct_t rop, ct_t a, uint64_t b)
 {
   assert(b < GAMMA_P);
 
-  for (size_t i = 0; i < GAMMA_N+1; i++) {
+  for (size_t i = 0; i <= GAMMA_N; i++) {
     mpz_mul_ui(rop[i], a[i], b);
     modq(rop[i]);
   }
@@ -145,7 +142,7 @@ void ct_addmul_ui(ct_t rop, ct_t a, uint64_t b)
 {
   assert(b < GAMMA_P);
 
-  for (size_t i = 0; i < GAMMA_N+1; i++) {
+  for (size_t i = 0; i <= GAMMA_N; i++) {
     mpz_addmul_ui(rop[i], a[i], b);
     modq(rop[i]);
   }
@@ -153,12 +150,19 @@ void ct_addmul_ui(ct_t rop, ct_t a, uint64_t b)
 
 void ct_add(ct_t rop, ct_t a, ct_t b)
 {
-  for (size_t i = 0; i < GAMMA_N+1; i++) {
+  for (size_t i = 0; i <= GAMMA_N; i++) {
     mpz_add(rop[i], a[i], b[i]);
     modq(rop[i]);
   }
 }
 
+
+void ct_zero(ct_t rop)
+{
+  for (size_t i = 0; i <= GAMMA_N; i++) {
+    mpz_set_ui(rop[i], 0);
+  }
+}
 
 #define fail_if_error() do {                    \
     if (errno > 0) {                            \
@@ -169,15 +173,14 @@ void ct_add(ct_t rop, ct_t a, ct_t b)
 
 
 
-void eval_poly(ct_t rop, uint8_t *c8, nmod_poly_t p, size_t d)
+void eval_poly(ct_t rop, rng_t rng, uint8_t *c8, nmod_poly_t p, size_t d)
 {
   ct_t ct;
   ct_init(ct);
 
   for (size_t i = 0; i < d; i++) {
-    ct_import(ct, &c8[i * CT_BLOCK]);
+    ct_import(ct, rng, &c8[i * CT_BLOCK]);
     ct_addmul_ui(rop, ct, nmod_poly_get_coeff_ui(p, i));
   }
-
   ct_clear(ct);
 }

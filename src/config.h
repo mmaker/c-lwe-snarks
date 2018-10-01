@@ -1,9 +1,6 @@
 /* src/config.h.  Generated from config.h.in by configure.  */
 /* src/config.h.in.  Generated from configure.ac by autoheader.  */
 
-/* Use aes-ni */
-#define AESNI 1
-
 /* Source directory */
 #define BASEDIR "./"
 

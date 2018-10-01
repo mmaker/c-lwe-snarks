@@ -15,10 +15,11 @@ void mpz2_urandomb(mpz_ptr rop, rng_t prg, size_t nbits)
 
   mp_ptr rp;
   size_t limbs = BITS_TO_LIMBS(nbits);
+  const size_t bytes = nbits / 8;
 
   rp = MPZ_NEWALLOC(rop, limbs);
 
-  aesctr_prg((aesctr_ptr) prg, rp, LIMBS_TO_BYTES(limbs));
+  aesctr_prg((aesctr_ptr) prg, rp, bytes);
   rp[limbs-1] &= (0xFFFFFFFFFFFFFFFFUL >> (limbs * 64 - nbits));
   MPN_NORMALIZE(rp, limbs);
   SIZ(rop) = limbs;
@@ -31,16 +32,25 @@ void mpz2_urandomb2(mpz_ptr rop, size_t nbits)
 
   mp_ptr rp;
   size_t limbs = BITS_TO_LIMBS(nbits);
+  const size_t bytes = nbits / 8;
 
   rp = MPZ_NEWALLOC(rop, limbs);
 
-  getrandom(rp, LIMBS_TO_BYTES(limbs), GRND_NONBLOCK);
+  getrandom(rp, bytes, GRND_NONBLOCK);
   rp[limbs-1] &= (0xFFFFFFFFFFFFFFFFUL >> (limbs * 64 - nbits));
   MPN_NORMALIZE(rp, limbs);
   SIZ(rop) = limbs;
 }
 
 
+void rng_seek(rng_t prg, size_t count)
+{
+  CTR(prg) = count/16;
+  count -= CTR(prg) * 16;
+
+  uint8_t sink[count];
+  aesctr_prg((aesctr_ptr) prg, sink, count);
+}
 
 void rng_init(rng_t prg, uint8_t *rseed)
 {

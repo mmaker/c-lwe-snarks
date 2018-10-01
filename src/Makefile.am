@@ -1,8 +1,8 @@
-check_PROGRAMS = test_lwe test_snark test_ssp test_aes
+check_PROGRAMS = test_lwe test_snark test_ssp test_aes test_entropy
 TESTS = $(check_PROGRAMS)
 
 if AESNI
-CFLAGS = -maes
+AM_CFLAGS = -maes
 else
 LDADD = -lcrypto
 endif
@@ -19,6 +19,7 @@ test_lwe_SOURCES = test_lwe.c $(ENTROPY) $(LWE) tests.h
 test_ssp_SOURCES = test_ssp.c $(ENTROPY) $(LWE) $(SSP) tests.h
 test_snark_SOURCES = test_snark.c $(ENTROPY) $(LWE) $(SNARK) $(SSP) tests.h
 test_aes_SOURCES = test_aes.c $(AES)
+test_entropy_SOURCES = test_entropy.c $(ENTROPY)
 benchmark_lwe_SOURCES = benchmark_lwe.c $(ENTROPY) $(LWE) timeit.h
 benchmark_eval_SOURCES = benchmark_eval.c $(ENTROPY) $(LWE) timeit.h
 benchmark_snark_SOURCES = benchmark_snark.c $(ENTROPY) $(LWE) $(SNARK) $(SSP) timeit.h

@@ -23,11 +23,16 @@ struct aesctr {
   aes_key_t *key;
 
   uint64_t ctr;
+
+  uint8_t remb[16];
+  size_t rem;
+
 };
 
+
+#define CTR(x) ((*(x))->ctr)
 typedef struct aesctr *aesctr_ptr;
 typedef struct aesctr aesctr_t[1];
-
 
 void aesctr_init(aesctr_ptr stream, const uint8_t *key, const uint64_t nonce);
 void aesctr_prg(aesctr_ptr stream, void *outbuf, size_t count);

@@ -48,6 +48,7 @@ aes_encrypt_block_aesni(const uint8_t *in, void *out, aes_key_t *key)
 
 void aesctr_init(aesctr_ptr stream, const uint8_t *key, const uint64_t nonce)
 {
+  stream->rem = 0;
   stream->ctr = 0;
   stream->key = malloc(sizeof(aes_key_t));
   if (!stream->key) {
@@ -107,6 +108,17 @@ void aesctr_prg(aesctr_ptr stream, void *_out, size_t bytes)
   size_t pos;
   memcpy(block, &stream->nonce, 8);
 
+  if (stream->rem >= bytes) {
+    memmove(out, stream->remb, bytes);
+    stream->rem -= bytes;
+    memmove(stream->remb, stream->remb+bytes, stream->rem);
+    return;
+  } else {
+    memcpy(out, stream->remb, stream->rem);
+    bytes -= stream->rem;
+    stream->rem = 0;
+  }
+
   size_t blocks = bytes/16;
   if (blocks > 0) {
     /* bytes that cannot be transferred block-wise */
@@ -122,11 +134,12 @@ void aesctr_prg(aesctr_ptr stream, void *_out, size_t bytes)
   }
 
   if (bytes) {
-    uint8_t ct[16];
     memcpy(block + 8, &pos, 8);
-    aes_encrypt_block(block, ct, stream->key);
-    memcpy(out, ct, bytes);
-    ++stream->ctr;
+    aes_encrypt_block(block, stream->remb, stream->key);
+    memcpy(out, stream->remb, bytes);
+    stream->ctr++;
+    stream->rem = 16 - bytes;
+    memmove(stream->remb, stream->remb+bytes, stream->rem);
   }
 
 }

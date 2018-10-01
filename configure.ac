@@ -65,7 +65,7 @@ AC_ARG_ENABLE(debug,
    CFLAGS+=" -DNDEBUG -O3 -march=native -fopenmp")
 
 
-AC_DEFINE([AESNI], [0], [Use aes-ni])
+#AC_DEFINE([AESNI], [0], [Use aes-ni])
 AM_CONDITIONAL([AESNI], [false])
 
 #AC_ARG_VAR([ss_base], [ss base])

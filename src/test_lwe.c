@@ -24,11 +24,13 @@
 #include "tests.h"
 
 
-#define setup()                                 \
-  rng_t rng;                                    \
-  RNG_INIT(rng);                                \
-  sk_t sk;                                      \
-  key_gen(sk, rng)
+#define setup()                                      \
+  rng_t rng;                                         \
+  rseed_t rseed;                                     \
+  getrandom(&rseed, sizeof(rseed_t), GRND_NONBLOCK); \
+  rng_init(rng, rseed);                              \
+  sk_t sk;                                           \
+  key_gen(sk)
 
 #define teardown()                              \
   key_clear(sk);                                \
@@ -38,6 +40,8 @@
 void test_import_export()
 {
   setup();
+  rng_t _rng;
+  rng_init(_rng, rseed);
   mpz_t m;
   mpz_init(m);
 
@@ -45,13 +49,19 @@ void test_import_export()
   ct_init(c);
   ct_init(_c);
 
+
+  mpz2_urandommv(c, rng, GAMMA_LOGQ, GAMMA_N);
+  mpz2_urandommv(_c, _rng, GAMMA_LOGQ, GAMMA_N);
+  assert(!mpz_cmp(_c[0], c[0]));
+
+
   uint8_t buf[CT_BLOCK];
-  for (size_t i = 0; i < 10; i++) {
+  for (size_t trials = 0; trials < 10; trials++) {
     mpz_set_ui(m, rand_modp());
     regev_encrypt(c, rng, sk, m);
     ct_export(buf, c);
-    ct_import(_c, buf);
-    for (size_t i = 0; i < GAMMA_N+1; i++) {
+    ct_import(_c, _rng, buf);
+    for (size_t i = 0; i <= GAMMA_N; i++) {
       assert(!mpz_cmp(_c[i], c[i]));
     }
   }
@@ -59,6 +69,7 @@ void test_import_export()
   ct_clear(c);
   ct_clear(_c);
   mpz_clear(m);
+  rng_clear(_rng);
   teardown();
 }
 
@@ -87,6 +98,7 @@ void test_correctness()
   teardown();
 }
 
+void ct_addmul_ui(ct_t rop, ct_t a, uint64_t b);
 
 #define fail_if_error() do {                    \
   if (errno > 0) {                              \
@@ -97,12 +109,14 @@ void test_correctness()
 void test_eval()
 {
   setup();
-  const size_t d = 50;
-  const char * coeffs_filename = BASEDIR "coeffs";
+  rng_t _rng;
+  rng_init(_rng, rseed);
+  const size_t d = 100;
+  //const char * coeffs_filename = BASEDIR "coeffs";
 
   uint8_t *buf = calloc(1, d * CT_BLOCK);
 
-  for (size_t tries = 0; tries != 10; tries++) {
+  for (size_t tries = 0; tries != 1; tries++) {
     mpz_t m[d];
 
     nmod_poly_t coeffs;
@@ -110,40 +124,49 @@ void test_eval()
     ct_t ct;
     ct_init(ct);
 
-    int cfd = open(coeffs_filename, O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR);
-    fail_if_error();
+    //int cfd = open(coeffs_filename, O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR);
+    //fail_if_error();
 
-    for(size_t i = 0; i != d; i++) {
+    for (size_t i = 0; i != d; i++) {
       mpz_init(m[i]);
       mpz_set_ui(m[i], rand_modp());
-      nmod_poly_set_coeff_ui(coeffs, i, rand_modp());
+      nmod_poly_set_coeff_ui(coeffs, i, 1);
       regev_encrypt(ct, rng, sk, m[i]);
       ct_export(&buf[i * CT_BLOCK], ct);
     }
-    write(cfd, buf, d * CT_BLOCK);
-    close(cfd);
-    fail_if_error();
-
-    ct_t evaluated;
-    ct_init(evaluated);
-
-    cfd = open(coeffs_filename, O_RDONLY | O_LARGEFILE);
-    const size_t length = d * CT_BLOCK;
-    uint8_t *c8 = mmap(NULL, length, PROT_READ, MAP_PRIVATE, cfd, 0);
-    madvise(c8, length, MADV_SEQUENTIAL);
-    fail_if_error();
-    eval_poly(evaluated, c8, coeffs, d);
-    munmap(c8, length);
-    close(cfd);
-    fail_if_error();
+    //write(cfd, buf, d * CT_BLOCK);
+    //close(cfd);
+    //fail_if_error();
 
     mpz_t got;
     mpz_init(got);
+    ct_t evaluated;
+    ct_init(evaluated);
+
+    //cfd = open(coeffs_filename, O_RDONLY | O_LARGEFILE);
+    //const size_t length = d * CT_BLOCK;
+    //uint8_t *c8 = mmap(NULL, length, PROT_READ, MAP_PRIVATE, cfd, 0);
+    // madvise(c8, length, MADV_SEQUENTIAL);
+    //    fail_if_error();
+    //ct_import(ct, _rng, buf);
+    //ct_mul_ui(evaluated, ct, 1);
+
+    eval_poly(evaluated, _rng, buf, coeffs, d);
     regev_decrypt(got, sk, evaluated);
+
+    /* rng_init(_rng, rseed); */
+    /* for (size_t i = 0; i != d; i++) { */
+    /*   ct_import(ct, _rng, &buf[i * CT_BLOCK]); */
+    /*   regev_decrypt(got, sk, ct); */
+    /*   assert(!mpz_cmp(got, m[i])); */
+    /* } */
+    //munmap(c8, length);
+    //close(cfd);
+    //fail_if_error();
 
     mpz_t correct;
     mpz_init_set_ui(correct, 0);
-    for (size_t i =0 ; i < d; i++) {
+    for (size_t i = 0 ; i < d; i++) {
       mpz_addmul_ui(correct, m[i], nmod_poly_get_coeff_ui(coeffs, i));
     }
     mpz_mod_ui(correct, correct, GAMMA_P);
@@ -157,6 +180,7 @@ void test_eval()
   }
 
   free(buf);
+  rng_clear(_rng);
   teardown();
 }
 
