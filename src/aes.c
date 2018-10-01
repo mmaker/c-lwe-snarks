@@ -105,7 +105,6 @@ void aesctr_prg(aesctr_ptr stream, void *_out, size_t bytes)
 {
   uint8_t * out = _out;
   uint8_t block[16];
-  size_t pos;
   memcpy(block, &stream->nonce, 8);
 
   if (stream->rem >= bytes) {
@@ -113,9 +112,10 @@ void aesctr_prg(aesctr_ptr stream, void *_out, size_t bytes)
     stream->rem -= bytes;
     memmove(stream->remb, stream->remb+bytes, stream->rem);
     return;
-  } else {
+  } else if (stream->rem > 0) {
     memcpy(out, stream->remb, stream->rem);
     bytes -= stream->rem;
+    out += stream->rem;
     stream->rem = 0;
   }
 
@@ -123,7 +123,6 @@ void aesctr_prg(aesctr_ptr stream, void *_out, size_t bytes)
   if (blocks > 0) {
     /* bytes that cannot be transferred block-wise */
     bytes -= blocks*16;
-
     do {
       memcpy(block + 8, &stream->ctr, 8);
       aes_encrypt_block(block, out, stream->key);
@@ -134,7 +133,7 @@ void aesctr_prg(aesctr_ptr stream, void *_out, size_t bytes)
   }
 
   if (bytes) {
-    memcpy(block + 8, &pos, 8);
+    memcpy(block + 8, &stream->ctr, 8);
     aes_encrypt_block(block, stream->remb, stream->key);
     memcpy(out, stream->remb, bytes);
     stream->ctr++;

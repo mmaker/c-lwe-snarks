@@ -43,7 +43,7 @@ void benchmark_eval()
 
   int cfd = open(COEFFS_FILENAME, O_CREAT | O_WRONLY | O_TRUNC, S_IRUSR | S_IWUSR);
   fail_if_error();
-  uint8_t buf[CT_BLOCK];
+  uint8_t buf[CT_BYTES];
 
   for (size_t i = 0; i != GAMMA_D; i++) {
     nmod_poly_set_coeff_ui(coeffs, i, rand_modp());
@@ -52,7 +52,7 @@ void benchmark_eval()
     mpz_set_ui(m[i], rand_modp());
     regev_encrypt(ct, rng, sk, m[i]);
     ct_export(buf, ct);
-    write(cfd, buf, CT_BLOCK);
+    write(cfd, buf, CT_BYTES);
   }
   close(cfd);
   fail_if_error();

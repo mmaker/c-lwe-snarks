@@ -51,7 +51,7 @@ bool benchmark_snark()
 
   vrs_t vrs;
   START_TIMEIT();
-  setup(crs, vrs, ssp, rng);
+  setup(crs, vrs, ssp);
   END_TIMEIT();
   msync(crs, CRS_SIZE, MS_SYNC);
   munmap(crs, CRS_SIZE);
@@ -65,7 +65,7 @@ bool benchmark_snark()
   crsfd = open(CRS_FILENAME, O_RDONLY | O_LARGEFILE);
   crs = mmap(NULL, CRS_SIZE, PROT_READ, MAP_PRIVATE, crsfd, 0);
   START_TIMEIT();
-  prover(pi, crs, ssp, witness, rng);
+  prover(pi, crs, ssp, witness);
   END_TIMEIT();
   perror("Prover");
   printf("prover\t" TIMEIT_FORMAT "\n", GET_TIMEIT());

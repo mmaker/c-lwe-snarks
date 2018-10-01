@@ -32,8 +32,33 @@ void proof_clear(proof_t pi)
   ct_clear(pi->b_w);
 }
 
-void setup(uint8_t *crs, vrs_t vrs, ssp_t ssp, rng_t rng)
+void crs_init(struct crs *crs)
 {
+  // YOLO MEMORY LEAKS
+  // DO IT AGAIN ALLOCATING ONLY ONCE and MMAP
+
+  getrandom(crs->seed, sizeof(rseed_t), GRND_NONBLOCK);
+  crs->s = (uint8_t (*)[CT_BYTES]) malloc(CT_BYTES * GAMMA_D);
+  if (!crs->s) perror("Error allocating memory");
+  crs->as = (uint8_t (*)[CT_BYTES]) malloc(CT_BYTES * GAMMA_D);
+  if (!crs->as)  perror("Error allocating memory");
+  crs->v = (uint8_t (*)[CT_BYTES]) malloc(CT_BYTES * GAMMA_D);
+  if (!crs->v) perror("Error allocating memory");
+  crs->t = (uint8_t *) malloc(CT_BYTES);
+}
+
+void crs_clear(struct crs *crs)
+{
+  free(crs->s);
+  free(crs->as);
+  free(crs->v);
+  free(crs->t);
+}
+void setup(crs_t crs, vrs_t vrs, ssp_t ssp)
+{
+  rng_t rng;
+  rng_init(rng, crs->seed);
+
   vrs->alpha = rand_modp();
   vrs->beta = rand_modp();
   vrs->s = rand_modp();
@@ -50,11 +75,11 @@ void setup(uint8_t *crs, vrs_t vrs, ssp_t ssp, rng_t rng)
   for (size_t i = 0; i < GAMMA_D; i++) {
     mpz_set_ui(current, s_i);
     regev_encrypt(ct, rng, vrs->sk, current);
-    ct_export(CRS_S_OFFSET(crs, i), ct);
+    CRS_S_EXPORT(crs, i, ct);
 
     mpz_set_ui(current, as_i);
     regev_encrypt(ct, rng, vrs->sk, current);
-    ct_export(CRS_AS_OFFSET(crs, i), ct);
+    CRS_AS_EXPORT(crs, i, ct);
 
     s_i = (s_i * vrs->s) % GAMMA_P;
     as_i = (as_i * vrs->s) % GAMMA_P;
@@ -68,7 +93,7 @@ void setup(uint8_t *crs, vrs_t vrs, ssp_t ssp, rng_t rng)
   const uint64_t v_i_bs = (nmod_poly_evaluate_nmod(v_i, vrs->s) * vrs->beta) % GAMMA_P;
   mpz_set_ui(current, v_i_bs);
   regev_encrypt(ct, rng, vrs->sk, current);
-  ct_export(CRS_T_OFFSET(crs), ct);
+  CRS_T_EXPORT(crs, ct);
 
   // β v_i
   for (size_t i = 0; i < GAMMA_M; i++) {
@@ -76,7 +101,7 @@ void setup(uint8_t *crs, vrs_t vrs, ssp_t ssp, rng_t rng)
     uint64_t v_i_bs = (nmod_poly_evaluate_nmod(v_i, vrs->s) * vrs->beta) % GAMMA_P;
     mpz_set_ui(current, v_i_bs);
     regev_encrypt(ct, rng, vrs->sk, current);
-    ct_export(CRS_V_OFFSET(crs, i), ct);
+    CRS_V_EXPORT(crs, i, ct);
   }
 
   ct_clear(ct);
@@ -84,8 +109,11 @@ void setup(uint8_t *crs, vrs_t vrs, ssp_t ssp, rng_t rng)
   mpz_clear(current);
 }
 
-void prover(proof_t pi, crs_t crs, ssp_t ssp, mpz_t witness, rng_t rng)
+void prover(proof_t pi, crs_t crs, ssp_t ssp, mpz_t witness)
 {
+  rng_t rng;
+  rng_init(rng, crs->seed);
+
   nmod_poly_t t;
   nmod_poly_init(t, GAMMA_P);
   nmod_poly_t v_i;
@@ -107,33 +135,37 @@ void prover(proof_t pi, crs_t crs, ssp_t ssp, mpz_t witness, rng_t rng)
   uint64_t delta = rand_modp();
   nmod_poly_scalar_mul_nmod(w, t, delta);
 
-  ct_import(pi->b_w, rng, CRS_T_OFFSET(crs));
+  rng_seek(rng, CRS_T_OFFSET());
+  ct_import(pi->b_w, rng, crs->t);
   ct_mul_ui(pi->b_w, pi->b_w, delta);
 
+  rng_seek(rng, CRS_V_OFFSET(0));
   for (size_t i = 1; i < GAMMA_M; i++) {
     if (mpz_tstbit(witness, i-1)) {
       nmod_poly_import(&v_i, &ssp[ssp_v_offset(i)], GAMMA_D);
       nmod_poly_add(w, w, v_i);
 
-      ct_import(ct_v_i, rng, CRS_V_OFFSET(crs, i));
+      ct_import(ct_v_i, rng, crs->v[i]);
       ct_add(pi->b_w, pi->b_w, ct_v_i);
     }
   }
 
-  eval_poly(pi->v_w, rng, CRS_S_OFFSET(crs, 0), w, GAMMA_D);
+  rng_seek(rng, CRS_S_OFFSET(0));
+  eval_poly(pi->v_w, rng, crs->s, w, GAMMA_D);
 
   // Assume l_u = 0 . So v(x) = v_0(x) + w(x).
   nmod_poly_import(&v_i, &ssp[ssp_v_offset(0)], GAMMA_D);
   nmod_poly_add(w, w, v_i);
-  eval_poly(pi->hat_v, rng, CRS_AS_OFFSET(crs, 0), w, GAMMA_D);
+  rng_seek(rng, CRS_AS_OFFSET(0));
+  eval_poly(pi->hat_v, rng, crs->as, w, GAMMA_D);
 
   nmod_poly_set(h, w);
   nmod_poly_pow(h, h, 2);
   nmod_poly_sub(h, h, one);
   nmod_poly_div(h, h, t);
 
-  eval_poly(pi->h, rng, CRS_S_OFFSET(crs, 0), h, GAMMA_D);
-  eval_poly(pi->hat_h, rng, CRS_AS_OFFSET(crs, 0), h, GAMMA_D);
+  eval_poly(pi->h, rng, crs->s, h, GAMMA_D);
+  eval_poly(pi->hat_h, rng, crs->as, h, GAMMA_D);
 
 
   nmod_poly_clear(h);

@@ -28,10 +28,6 @@
 #define LOGQ_BYTES 92UL
 #define LOGP_BYTES 4
 #define CT_BYTES (LOGQ_BYTES)
-/* CT_BLOCK is the block to be written on disk.
-   Depending on the device it will need to be a power of 2 divisible by sizeof((void *)).
-*/
-#define CT_BLOCK (CT_BYTES) //(1 << 18)
 
 /* secret key generation */
 typedef mpz_t sk_t[GAMMA_N];
@@ -74,7 +70,7 @@ void regev_decrypt(mpz_t m, sk_t sk, ct_t ct);
 void ct_smudge(ct_t ct);
 void ct_add(ct_t rop, ct_t a, ct_t b);
 void ct_mul_ui(ct_t rop, ct_t a, uint64_t b);
-void eval_poly(ct_t rop, rng_t rng, uint8_t *c8, nmod_poly_t coeffs, size_t d);
+void eval_poly(ct_t rop, rng_t rng, uint8_t (*c8)[CT_BYTES], nmod_poly_t coeffs, size_t d);
 
 #define ct_clearv(vs, len) do {                     \
     for (size_t i = 0; i < len; i++) {              \

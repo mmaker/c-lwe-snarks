@@ -21,7 +21,8 @@ void test_snark()
 
   //int crsfd = open(CRS_FILENAME, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
   //uint8_t *crs = mmap(NULL, CRS_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE, crsfd, 0);
-  uint8_t *crs = calloc(1, CRS_SIZE);
+  crs_t crs;
+  crs_init(crs);
   // SSP GENERATION
   uint8_t *ssp = calloc(1, SSP_SIZE);
   mpz_t witness;
@@ -30,13 +31,15 @@ void test_snark()
 
   // CRS GENERATION TEST
   vrs_t vrs;
-  setup(crs, vrs, ssp, rng);
+  setup(crs, vrs, ssp);
 
   ct_t ct_s, ct_as;
   ct_init(ct_s);
   ct_init(ct_as);
-  ct_import(ct_s, CRS_S_OFFSET(crs, 0));
-  ct_import(ct_as, CRS_AS_OFFSET(crs, 0));
+  rng_seek(rng, CRS_S_OFFSET(0));
+  ct_import(ct_s, rng, crs->s[0]);
+  rng_seek(rng, CRS_AS_OFFSET(0));
+  ct_import(ct_as, rng, crs->as[0]);
   mpz_t s, as;
   mpz_inits(s, as, NULL);
   regev_decrypt(s, vrs->sk, ct_s);
@@ -44,16 +47,21 @@ void test_snark()
   assert(!mpz_cmp_ui(s, 1));
   assert(!mpz_cmp_ui(as, vrs->alpha));
 
-  ct_import(ct_s, CRS_S_OFFSET(crs, 1));
-  ct_import(ct_as, CRS_AS_OFFSET(crs, 1));
+
+  rng_seek(rng, CRS_S_OFFSET(1));
+  ct_import(ct_s, rng, crs->s[1]);
+  rng_seek(rng, CRS_AS_OFFSET(1));
+  ct_import(ct_as, rng, crs->as[1]);
   regev_decrypt(s, vrs->sk, ct_s);
   regev_decrypt(as, vrs->sk, ct_as);
   mpz_mul_ui(s, s, vrs->alpha);
   mpz_mod_ui(s, s, GAMMA_P);
   assert(!mpz_cmp(s, as));
 
-  ct_import(ct_s, CRS_S_OFFSET(crs, GAMMA_D-1));
-  ct_import(ct_as, CRS_AS_OFFSET(crs, GAMMA_D-1));
+  rng_seek(rng, CRS_S_OFFSET(GAMMA_D-1));
+  ct_import(ct_s, rng, crs->s[GAMMA_D-1]);
+  rng_seek(rng, CRS_AS_OFFSET(GAMMA_D-1));
+  ct_import(ct_as, rng, crs->as[GAMMA_D-1]);
   regev_decrypt(s, vrs->sk, ct_s);
   regev_decrypt(as, vrs->sk, ct_as);
   mpz_mul_ui(s, s, vrs->alpha);
@@ -67,7 +75,7 @@ void test_snark()
   // PROVER TESTS
   proof_t pi;
   proof_init(pi);
-  prover(pi, crs, ssp, witness, rng);
+  prover(pi, crs, ssp, witness);
 
   mpz_t h_s, hat_h_s;
   mpz_inits(h_s, hat_h_s, NULL);
@@ -96,7 +104,7 @@ void test_snark()
 
   assert(out);
   proof_clear(pi);
-  free(crs);
+  crs_clear(crs);
   free(ssp);
   key_clear(vrs->sk);
   rng_clear(rng);

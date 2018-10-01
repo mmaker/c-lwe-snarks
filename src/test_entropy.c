@@ -56,11 +56,56 @@ void test_deterministic()
   mpz2_urandomb(b, _rng, 40);
   assert(!mpz_cmp(a, b));
 
+
+  mpz2_urandomb(a, rng,  512 + 8);
+  mpz2_urandomb(b, _rng, 512 + 8);
+  assert(!mpz_cmp(a, b));
+
+
+  mpz2_urandomb(a, rng, 512);
+  mpz2_urandomb(b, _rng, 512);
+  assert(!mpz_cmp(a, b));
+
+  for (size_t rest = 0; rest < 16; rest++) {
+    mpz2_urandomb(a, rng, 736 + rest);
+    mpz2_urandomb(b, _rng, 736 + rest);
+    assert(!mpz_cmp(a, b));
+  }
+
   rng_clear(rng);
   rng_clear(_rng);
 
 }
 
+
+void test_deterministic_urandomb()
+{
+  rng_t rng, _rng;
+  rseed_t seed;
+  getrandom(seed, sizeof(rseed_t), GRND_NONBLOCK);
+  rng_init(rng, seed);
+  rng_init(_rng, seed);
+
+  const size_t size = 800;
+  mpz_t a[size], b[size];
+  for (size_t i = 0; i < size; i++) {
+    mpz_init(a[i]);
+    mpz_init(b[i]);
+  }
+
+  for (size_t i = 0; i < size; i++) {
+    mpz2_urandomb(a[i], rng, 700);
+    mpz2_urandomb(b[i], _rng, 700);
+    assert(!mpz_cmp(a[i], b[i]));
+  }
+
+  for (size_t i = 0; i < size; i++) {
+    mpz_clear(a[i]);
+    mpz_clear(b[i]);
+  }
+  rng_clear(rng);
+  rng_clear(_rng);
+}
 
 void test_seek()
 {
@@ -88,5 +133,6 @@ int main()
 {
   test_nonzero();
   test_deterministic();
+  test_deterministic_urandomb();
   test_seek();
 }

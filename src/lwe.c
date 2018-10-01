@@ -114,7 +114,7 @@ void regev_decrypt(mpz_t m, sk_t sk, ct_t ct)
 
 void ct_export(uint8_t *buf, ct_t ct)
 {
-  bzero(buf, CT_BLOCK);
+  bzero(buf, CT_BYTES);
   mpz_export(buf, NULL, -1, sizeof(uint8_t), -1, 0, ct[GAMMA_N]);
 }
 
@@ -173,13 +173,13 @@ void ct_zero(ct_t rop)
 
 
 
-void eval_poly(ct_t rop, rng_t rng, uint8_t *c8, nmod_poly_t p, size_t d)
+void eval_poly(ct_t rop, rng_t rng, uint8_t (*c8)[CT_BYTES], nmod_poly_t p, size_t d)
 {
   ct_t ct;
   ct_init(ct);
 
   for (size_t i = 0; i < d; i++) {
-    ct_import(ct, rng, &c8[i * CT_BLOCK]);
+    ct_import(ct, rng, c8[i]);
     ct_addmul_ui(rop, ct, nmod_poly_get_coeff_ui(p, i));
   }
   ct_clear(ct);

@@ -55,7 +55,7 @@ void test_import_export()
   assert(!mpz_cmp(_c[0], c[0]));
 
 
-  uint8_t buf[CT_BLOCK];
+  uint8_t buf[CT_BYTES];
   for (size_t trials = 0; trials < 10; trials++) {
     mpz_set_ui(m, rand_modp());
     regev_encrypt(c, rng, sk, m);
@@ -114,7 +114,7 @@ void test_eval()
   const size_t d = 100;
   //const char * coeffs_filename = BASEDIR "coeffs";
 
-  uint8_t *buf = calloc(1, d * CT_BLOCK);
+  uint8_t (*buf)[CT_BYTES] = (uint8_t (*) [CT_BYTES]) calloc(1, d * CT_BYTES);
 
   for (size_t tries = 0; tries != 1; tries++) {
     mpz_t m[d];
@@ -132,9 +132,9 @@ void test_eval()
       mpz_set_ui(m[i], rand_modp());
       nmod_poly_set_coeff_ui(coeffs, i, 1);
       regev_encrypt(ct, rng, sk, m[i]);
-      ct_export(&buf[i * CT_BLOCK], ct);
+      ct_export(buf[i], ct);
     }
-    //write(cfd, buf, d * CT_BLOCK);
+    //write(cfd, buf, d * CT_BYTES);
     //close(cfd);
     //fail_if_error();
 
@@ -144,7 +144,7 @@ void test_eval()
     ct_init(evaluated);
 
     //cfd = open(coeffs_filename, O_RDONLY | O_LARGEFILE);
-    //const size_t length = d * CT_BLOCK;
+    //const size_t length = d * CT_BYTES;
     //uint8_t *c8 = mmap(NULL, length, PROT_READ, MAP_PRIVATE, cfd, 0);
     // madvise(c8, length, MADV_SEQUENTIAL);
     //    fail_if_error();
@@ -156,7 +156,7 @@ void test_eval()
 
     /* rng_init(_rng, rseed); */
     /* for (size_t i = 0; i != d; i++) { */
-    /*   ct_import(ct, _rng, &buf[i * CT_BLOCK]); */
+    /*   ct_import(ct, _rng, &buf[i * CT_BYTES]); */
     /*   regev_decrypt(got, sk, ct); */
     /*   assert(!mpz_cmp(got, m[i])); */
     /* } */
