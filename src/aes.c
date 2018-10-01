@@ -127,8 +127,8 @@ void aesctr_prg(aesctr_ptr stream, void *_out, size_t bytes)
       memcpy(block + 8, &stream->ctr, 8);
       aes_encrypt_block(block, out, stream->key);
       out += 16;
+      stream->ctr++;
       --blocks;
-      ++stream->ctr;
     } while (blocks != 0);
   }
 

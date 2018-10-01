@@ -1,7 +1,7 @@
 #include "config.h"
 
 #include <assert.h>
-
+#include <stdlib.h>
 #include "entropy.h"
 #include "tests.h"
 
@@ -107,6 +107,34 @@ void test_deterministic_urandomb()
   rng_clear(_rng);
 }
 
+
+void test_accumulate()
+{
+  rng_t rng;
+  rng_t _rng;
+  rseed_t seed;
+  getrandom(seed, sizeof(rseed_t), GRND_NONBLOCK);
+  rng_init(rng, seed);
+  rng_init(_rng, seed);
+
+  const size_t n = 92 * 1470 * 1000;
+  uint8_t *sink = malloc(n);
+  rng_gen(rng, sink, n);
+
+  uint8_t *_sink = malloc(n);
+  for (size_t i = 0; i <1470 * 1000; i++) {
+    rng_gen(_rng, &_sink[i * 92], 92);
+  }
+
+  assert(sink[0] == _sink[0]);
+  assert(sink[n-1] == _sink[n-1]);
+
+  free(sink);
+  free(_sink);
+  rng_clear(rng);
+  rng_clear(_rng);
+
+}
 void test_seek()
 {
   rng_t rng;
@@ -125,7 +153,6 @@ void test_seek()
   rng_gen(_rng, &got, 8);
   rng_gen(rng, &expected, 8);
   assert(got == expected);
-
 }
 
 
@@ -134,5 +161,6 @@ int main()
   test_nonzero();
   test_deterministic();
   test_deterministic_urandomb();
+  test_accumulate();
   test_seek();
 }

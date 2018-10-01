@@ -31,6 +31,7 @@ struct aesctr {
 
 
 #define CTR(x) ((*(x))->ctr)
+#define REM(x) ((*(x))->rem)
 typedef struct aesctr *aesctr_ptr;
 typedef struct aesctr aesctr_t[1];
 

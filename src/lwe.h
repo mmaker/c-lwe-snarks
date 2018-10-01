@@ -13,15 +13,16 @@
 
 #ifdef NDEBUG
 #define GAMMA_D (1UL << 15)
+/* must be divisible by 8 */
+#define GAMMA_M (21845)
 #else
 #define GAMMA_D (1UL << 8)
+#define GAMMA_M (1UL << 6)
 #endif
 
 #define GAMMA_N 1470
 #define GAMMA_LOGQ 736
 #define GAMMA_P 0xfffffffbUL
-/* must be divisible by 8 */
-#define GAMMA_M (21845)
 #define GAMMA_LU 10
 #define GAMMA_LOG_SMUDGING 640
 #define GAMMA_LOG_SIGMA 556

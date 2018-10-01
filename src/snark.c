@@ -42,7 +42,7 @@ void crs_init(struct crs *crs)
   if (!crs->s) perror("Error allocating memory");
   crs->as = (uint8_t (*)[CT_BYTES]) malloc(CT_BYTES * GAMMA_D);
   if (!crs->as)  perror("Error allocating memory");
-  crs->v = (uint8_t (*)[CT_BYTES]) malloc(CT_BYTES * GAMMA_D);
+  crs->v = (uint8_t (*)[CT_BYTES]) malloc(CT_BYTES * GAMMA_M);
   if (!crs->v) perror("Error allocating memory");
   crs->t = (uint8_t *) malloc(CT_BYTES);
 }
@@ -69,19 +69,24 @@ void setup(crs_t crs, vrs_t vrs, ssp_t ssp)
 
   mpz_t current;
   mpz_init(current);
-  uint64_t s_i = 1;
-  uint64_t as_i = vrs->alpha;
 
+  uint64_t s_i, as_i;
+
+  s_i= 1;
   for (size_t i = 0; i < GAMMA_D; i++) {
     mpz_set_ui(current, s_i);
     regev_encrypt(ct, rng, vrs->sk, current);
-    CRS_S_EXPORT(crs, i, ct);
-
-    mpz_set_ui(current, as_i);
-    regev_encrypt(ct, rng, vrs->sk, current);
-    CRS_AS_EXPORT(crs, i, ct);
+    ct_export(crs->s[i], ct);
 
     s_i = (s_i * vrs->s) % GAMMA_P;
+  }
+
+  as_i = vrs->alpha;
+  for (size_t i = 0; i< GAMMA_D; i++) {
+    mpz_set_ui(current, as_i);
+    regev_encrypt(ct, rng, vrs->sk, current);
+    ct_export(crs->as[i], ct);
+
     as_i = (as_i * vrs->s) % GAMMA_P;
   }
 
@@ -93,15 +98,15 @@ void setup(crs_t crs, vrs_t vrs, ssp_t ssp)
   const uint64_t v_i_bs = (nmod_poly_evaluate_nmod(v_i, vrs->s) * vrs->beta) % GAMMA_P;
   mpz_set_ui(current, v_i_bs);
   regev_encrypt(ct, rng, vrs->sk, current);
-  CRS_T_EXPORT(crs, ct);
+  ct_export(crs->t, ct);
 
   // β v_i
-  for (size_t i = 0; i < GAMMA_M; i++) {
+  for (size_t i=1; i < GAMMA_M; i++) {
     nmod_poly_import(&v_i, &ssp[ssp_v_offset(i)], GAMMA_D);
     uint64_t v_i_bs = (nmod_poly_evaluate_nmod(v_i, vrs->s) * vrs->beta) % GAMMA_P;
     mpz_set_ui(current, v_i_bs);
     regev_encrypt(ct, rng, vrs->sk, current);
-    CRS_V_EXPORT(crs, i, ct);
+    ct_export(crs->v[i-1], ct);
   }
 
   ct_clear(ct);
@@ -135,28 +140,27 @@ void prover(proof_t pi, crs_t crs, ssp_t ssp, mpz_t witness)
   uint64_t delta = rand_modp();
   nmod_poly_scalar_mul_nmod(w, t, delta);
 
-  rng_seek(rng, CRS_T_OFFSET());
+  rng_seek(rng, CTR_BT);
   ct_import(pi->b_w, rng, crs->t);
   ct_mul_ui(pi->b_w, pi->b_w, delta);
 
-  rng_seek(rng, CRS_V_OFFSET(0));
   for (size_t i = 1; i < GAMMA_M; i++) {
+    ct_import(ct_v_i, rng, crs->v[i-1]);
     if (mpz_tstbit(witness, i-1)) {
       nmod_poly_import(&v_i, &ssp[ssp_v_offset(i)], GAMMA_D);
       nmod_poly_add(w, w, v_i);
 
-      ct_import(ct_v_i, rng, crs->v[i]);
       ct_add(pi->b_w, pi->b_w, ct_v_i);
     }
   }
 
-  rng_seek(rng, CRS_S_OFFSET(0));
+  rng_seek(rng, CTR_S);
   eval_poly(pi->v_w, rng, crs->s, w, GAMMA_D);
 
   // Assume l_u = 0 . So v(x) = v_0(x) + w(x).
   nmod_poly_import(&v_i, &ssp[ssp_v_offset(0)], GAMMA_D);
   nmod_poly_add(w, w, v_i);
-  rng_seek(rng, CRS_AS_OFFSET(0));
+  rng_seek(rng, CTR_AS);
   eval_poly(pi->hat_v, rng, crs->as, w, GAMMA_D);
 
   nmod_poly_set(h, w);
@@ -164,7 +168,9 @@ void prover(proof_t pi, crs_t crs, ssp_t ssp, mpz_t witness)
   nmod_poly_sub(h, h, one);
   nmod_poly_div(h, h, t);
 
+  rng_seek(rng, CTR_S);
   eval_poly(pi->h, rng, crs->s, h, GAMMA_D);
+  rng_seek(rng, CTR_AS);
   eval_poly(pi->hat_h, rng, crs->as, h, GAMMA_D);
 
 

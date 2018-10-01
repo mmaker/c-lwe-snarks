@@ -5,30 +5,11 @@
 
 #define CRS_SIZE (CT_BYTES * (2*GAMMA_D + GAMMA_M + 1 + 2))
 
-#define CRS_S_OFFSET(i)   ((i) * CT_BYTES)
-#define CRS_AS_OFFSET(i)  (((i) * CT_BYTES) + (CT_BYTES * GAMMA_D))
-#define CRS_T_OFFSET()    (2 * (CT_BYTES * GAMMA_D))
-#define CRS_V_OFFSET(i)   (2 * (CT_BYTES * GAMMA_D) + CT_BYTES + (i) * CT_BYTES)
-
-
-#define CRS_S_EXPORT(crs, i, ct)  ct_export(crs->s[i], ct)
-#define CRS_AS_EXPORT(crs, i, ct) ct_export(crs->as[i], ct)
-#define CRS_T_EXPORT(crs, ct)     ct_export(crs->t, ct)
-#define CRS_V_EXPORT(crs, i, ct)  ct_export(crs->v[i], ct)
-
-#define CRS_T_IMPORT(ct, rng, crs)  do {          \
-    const size_t pos = CRS_T_OFFSET();            \
-    rng_seek(pos);                                \
-    ct_import(ct, rng, &crs->stream[pos]);        \
-  } while (0)
-
-
-#define CRS_V_IMPORT(ct, rng, crs, i) do {      \
-  const size_t pos = CRS_V_OFFSET(i);           \
-  rng_seek(pos);                                \
-  ct_import(ct, rng, &crs->stream[pos]);        \
-  } while (0)
-
+#define CTR_CT (CT_BYTES * GAMMA_N)
+#define CTR_S  0
+#define CTR_AS (CTR_CT * GAMMA_D)
+#define CTR_BT  (2 * CTR_CT * GAMMA_D)
+#define CTR_BV  (2 * CTR_CT * GAMMA_D + CTR_CT)
 
 struct proof {
   ct_t h;

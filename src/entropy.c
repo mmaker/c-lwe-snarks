@@ -45,11 +45,14 @@ void mpz2_urandomb2(mpz_ptr rop, size_t nbits)
 
 void rng_seek(rng_t prg, size_t count)
 {
+  REM(prg) = 0;
   CTR(prg) = count/16;
   count -= CTR(prg) * 16;
 
-  uint8_t sink[count];
-  aesctr_prg((aesctr_ptr) prg, sink, count);
+  if (count) {
+    uint8_t sink[count];
+    aesctr_prg((aesctr_ptr) prg, sink, count);
+  }
 }
 
 void rng_init(rng_t prg, uint8_t *rseed)

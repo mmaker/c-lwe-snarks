@@ -31,39 +31,42 @@ bool benchmark_snark()
   INIT_TIMEIT();
 
   // SSP GENERATION
-  int sspfd = open(SSP_FILENAME, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
-  ftruncate(sspfd, SSP_SIZE);
-  uint8_t *ssp = mmap(NULL, SSP_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, sspfd, 0);
+  // int sspfd = open(SSP_FILENAME, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
+  // ftruncate(sspfd, SSP_SIZE);
+  // uint8_t *ssp = mmap(NULL, SSP_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, sspfd, 0);
+  ssp_t ssp = calloc(1, SSP_SIZE);
   mpz_t witness;
   mpz_init(witness);
-  random_ssp(witness, ssp, rng);
-  msync(ssp, SSP_SIZE, MS_SYNC);
-  munmap(ssp, SSP_SIZE);
-  close(sspfd);
+  random_ssp(witness, ssp);
+  // msync(ssp, SSP_SIZE, MS_SYNC);
+  // munmap(ssp, SSP_SIZE);
+  // close(sspfd);
   perror("SSP generation");
 
   // CRS GENERATION
-  int crsfd = open(CRS_FILENAME, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
-  ftruncate(crsfd, CRS_SIZE);
-  uint8_t *crs = mmap(NULL, CRS_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, crsfd, 0);
-  sspfd = open(SSP_FILENAME, O_RDONLY | O_LARGEFILE);
-  ssp = mmap(NULL, SSP_SIZE, PROT_READ, MAP_PRIVATE, sspfd, 0);
+  //int crsfd = open(CRS_FILENAME, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
+  //ftruncate(crsfd, CRS_SIZE);
+  //uint8_t *crs = mmap(NULL, CRS_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, crsfd, 0);
+  crs_t crs;
+  crs_init(crs);
+  // sspfd = open(SSP_FILENAME, O_RDONLY | O_LARGEFILE);
+  // ssp = mmap(NULL, SSP_SIZE, PROT_READ, MAP_PRIVATE, sspfd, 0);
 
   vrs_t vrs;
   START_TIMEIT();
   setup(crs, vrs, ssp);
   END_TIMEIT();
-  msync(crs, CRS_SIZE, MS_SYNC);
-  munmap(crs, CRS_SIZE);
-  close(crsfd);
-  perror("CRS generation");
+  // msync(crs, CRS_SIZE, MS_SYNC);
+  // munmap(crs, CRS_SIZE);
+  // close(crsfd);
+  // perror("CRS generation");
   printf("setup\t" TIMEIT_FORMAT "\n", GET_TIMEIT());
 
   // PROVER
   proof_t pi;
   proof_init(pi);
-  crsfd = open(CRS_FILENAME, O_RDONLY | O_LARGEFILE);
-  crs = mmap(NULL, CRS_SIZE, PROT_READ, MAP_PRIVATE, crsfd, 0);
+  // crsfd = open(CRS_FILENAME, O_RDONLY | O_LARGEFILE);
+  // crs = mmap(NULL, CRS_SIZE, PROT_READ, MAP_PRIVATE, crsfd, 0);
   START_TIMEIT();
   prover(pi, crs, ssp, witness);
   END_TIMEIT();
@@ -79,10 +82,10 @@ bool benchmark_snark()
   printf("verifier\t" TIMEIT_FORMAT "\n", GET_TIMEIT());
 
   proof_clear(pi);
-  munmap(crs, CRS_SIZE);
-  munmap(ssp, SSP_SIZE);
-  close(crsfd);
-  close(sspfd);
+  // munmap(crs, CRS_SIZE);
+  // munmap(ssp, SSP_SIZE);
+  // close(crsfd);
+  // close(sspfd);
 
   return out;
 }

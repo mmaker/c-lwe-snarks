@@ -17,8 +17,6 @@
 void test_snark()
 {
   rng_t rng;
-  RNG_INIT(rng);
-
   //int crsfd = open(CRS_FILENAME, O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
   //uint8_t *crs = mmap(NULL, CRS_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE, crsfd, 0);
   crs_t crs;
@@ -27,18 +25,19 @@ void test_snark()
   uint8_t *ssp = calloc(1, SSP_SIZE);
   mpz_t witness;
   mpz_init(witness);
-  random_ssp(witness, ssp, rng);
+  random_ssp(witness, ssp);
 
   // CRS GENERATION TEST
   vrs_t vrs;
   setup(crs, vrs, ssp);
+  rng_init(rng, crs->seed);
 
   ct_t ct_s, ct_as;
   ct_init(ct_s);
   ct_init(ct_as);
-  rng_seek(rng, CRS_S_OFFSET(0));
+  rng_seek(rng, CTR_S);
   ct_import(ct_s, rng, crs->s[0]);
-  rng_seek(rng, CRS_AS_OFFSET(0));
+  rng_seek(rng, CTR_AS);
   ct_import(ct_as, rng, crs->as[0]);
   mpz_t s, as;
   mpz_inits(s, as, NULL);
@@ -48,9 +47,9 @@ void test_snark()
   assert(!mpz_cmp_ui(as, vrs->alpha));
 
 
-  rng_seek(rng, CRS_S_OFFSET(1));
+  rng_seek(rng, CTR_S + CTR_CT);
   ct_import(ct_s, rng, crs->s[1]);
-  rng_seek(rng, CRS_AS_OFFSET(1));
+  rng_seek(rng, CTR_AS + CTR_CT);
   ct_import(ct_as, rng, crs->as[1]);
   regev_decrypt(s, vrs->sk, ct_s);
   regev_decrypt(as, vrs->sk, ct_as);
@@ -58,9 +57,9 @@ void test_snark()
   mpz_mod_ui(s, s, GAMMA_P);
   assert(!mpz_cmp(s, as));
 
-  rng_seek(rng, CRS_S_OFFSET(GAMMA_D-1));
+  rng_seek(rng, CTR_S + CTR_CT *(GAMMA_D-1));
   ct_import(ct_s, rng, crs->s[GAMMA_D-1]);
-  rng_seek(rng, CRS_AS_OFFSET(GAMMA_D-1));
+  rng_seek(rng, CTR_AS + CTR_CT *(GAMMA_D-1));
   ct_import(ct_as, rng, crs->as[GAMMA_D-1]);
   regev_decrypt(s, vrs->sk, ct_s);
   regev_decrypt(as, vrs->sk, ct_as);
@@ -96,6 +95,7 @@ void test_snark()
   regev_decrypt(w_s, vrs->sk, pi->v_w);
   mpz_mul_ui(w_s, w_s, vrs->beta);
   mpz_mod_ui(w_s, w_s, GAMMA_P);
+  //  assert(!mpz_cmp(w_s, b_s));
   mpz_clears(b_s, w_s, NULL);
   nmod_poly_clear(v_i);
 
