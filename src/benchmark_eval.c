@@ -62,7 +62,7 @@ void benchmark_eval()
 
   cfd = open(COEFFS_FILENAME, O_RDONLY | O_LARGEFILE);
   static const size_t length = GAMMA_D * CT_BYTES;
-  uint8_t *c8 = mmap(NULL, length, PROT_READ, MAP_PRIVATE, cfd, 0);
+  uint8_t (*c8)[CT_BYTES] = mmap(NULL, length, PROT_READ, MAP_PRIVATE, cfd, 0);
   madvise(c8, length, MADV_SEQUENTIAL);
 
   fail_if_error();

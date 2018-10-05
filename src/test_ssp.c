@@ -6,7 +6,6 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <sys/random.h>
 #include <string.h>
 
 #include <flint/nmod_poly.h>

@@ -13,10 +13,6 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include <sys/mman.h>
-#include <sys/random.h>
-#include <sys/syscall.h>
-
 #include <flint/nmod_poly.h>
 #include <gmp.h>
 
