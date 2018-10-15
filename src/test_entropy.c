@@ -86,7 +86,7 @@ void test_deterministic_urandomb()
   rng_init(rng, seed);
   rng_init(_rng, seed);
 
-  const size_t size = 800;
+  const size_t size = 400;
   mpz_t a[size], b[size];
   for (size_t i = 0; i < size; i++) {
     mpz_init(a[i]);
