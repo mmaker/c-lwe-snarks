@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.65])
-AC_INIT([mangiafuoco], [0.1], [michele.orru@ens.fr])
+AC_INIT([mangiafuoco], [0.2], [michele.orru@ens.fr])
 
 
 AC_CONFIG_SRCDIR([src/lwe.c])
